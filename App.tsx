@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { User, VirtualAccount } from './types';
@@ -20,7 +19,7 @@ import Receipt from './screens/Receipt';
 // Components
 import Sidebar from './components/Sidebar';
 
-export const HDFCLogo: React.FC<{ size?: 'sm' | 'md' | 'lg' | 'xl'; className?: string }> = ({ size = 'md', className = "" }) => {
+export const HDFCLogo: React.FC<{ size?: 'sm' | 'md' | 'lg' | 'xl'; className?: string; color?: string }> = ({ size = 'md', className = "", color = "#004c8f" }) => {
   const dimensions = {
     sm: 'w-6 h-6',
     md: 'w-10 h-10',
@@ -29,11 +28,14 @@ export const HDFCLogo: React.FC<{ size?: 'sm' | 'md' | 'lg' | 'xl'; className?: 
   };
   
   return (
-    <div className={`${dimensions[size]} ${className} flex-shrink-0 flex items-center justify-center bg-white rounded-sm overflow-hidden`}>
-      <img src="./icon.png" alt="HDFC Bank" className="w-full h-full object-contain" onError={(e) => {
-        // Fallback if icon.png fails
-        (e.target as HTMLImageElement).src = "https://www.hdfcbank.com/content/api/contentstream-id/723fb80a-2dde-42a3-9793-7ae1be57c87f/6f6f9662-7945-4228-86d1-4470d036329e/Footer/About%20Us/Logos/HDFC_Bank_Logo.png";
-      }} />
+    <div className={`${dimensions[size]} ${className} flex-shrink-0 flex items-center justify-center`}>
+      {/* High-fidelity HDFC Logo Reconstruction using SVG */}
+      <svg viewBox="0 0 100 100" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100" height="100" rx="4" fill={color}/>
+        <rect x="18" y="24" width="14" height="52" fill="white"/>
+        <rect x="68" y="24" width="14" height="52" fill="white"/>
+        <rect x="32" y="42" width="36" height="16" fill="white"/>
+      </svg>
     </div>
   );
 }
@@ -70,7 +72,6 @@ const AppContent: React.FC = () => {
 
   const isPublicRoute = ['/', '/onboard'].includes(location.pathname);
 
-  // If user is already logged in and tries to access public routes, redirect to dashboard
   useEffect(() => {
     if (user && isPublicRoute) {
       navigate('/dashboard', { replace: true });
@@ -104,7 +105,7 @@ const AppContent: React.FC = () => {
               </svg>
             </button>
             <div className="flex items-center gap-2">
-              <HDFCLogo size="sm" />
+              <HDFCLogo size="sm" color="white" />
               <div className="text-xl font-bold tracking-tight">HDFC Bank</div>
             </div>
             <button 

@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -40,6 +39,8 @@
         body { 
           font-family: 'Inter', sans-serif; 
           color: #1e293b; 
+          padding-top: env(safe-area-inset-top);
+          padding-bottom: env(safe-area-inset-bottom);
         }
         #root {
           width: 100%;
@@ -73,6 +74,12 @@
           flex: 1;
           overflow-y: auto;
           -webkit-overflow-scrolling: touch;
+        }
+
+        /* Prevent overscroll on iOS */
+        body {
+          position: fixed;
+          overflow: hidden;
         }
     </style>
 <script type="importmap">

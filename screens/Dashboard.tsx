@@ -17,7 +17,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user: propUser, account: propAcco
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Sync props or fetch from session/db
     if (!localUser) {
       const stored = sessionStorage.getItem('active_user');
       if (stored) setLocalUser(JSON.parse(stored));
@@ -75,11 +74,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user: propUser, account: propAcco
         </div>
       </div>
 
-      {/* Balance Card - Refined UI */}
-      <div className="bg-[#00366B] rounded-2xl p-6 text-white shadow-xl relative overflow-hidden ring-1 ring-white/10 group active:scale-[0.99] transition-transform duration-200">
-        {/* Subtle Background Pattern */}
-        <div className="absolute inset-0 opacity-[0.07] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
-        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-white/10 to-transparent rounded-full -mr-20 -mt-20 blur-2xl"></div>
+      {/* Balance Card - Premium UI with Pattern */}
+      <div className="bg-gradient-to-br from-[#004c8f] via-[#00366B] to-[#00284d] rounded-2xl p-6 text-white shadow-2xl relative overflow-hidden group active:scale-[0.99] transition-transform duration-200 border border-white/10">
+        {/* Intricate Bank Pattern Overlay */}
+        <div className="absolute inset-0 opacity-[0.08] pointer-events-none mix-blend-overlay" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='1' fill-rule='evenodd'%3E%3Cpath d='M0 40L40 0H20L0 20M40 40V20L20 40'/%3E%3C/g%3E%3C/svg%3E")` }}></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-white/20 to-transparent rounded-full -mr-20 -mt-20 blur-3xl opacity-50"></div>
 
         <div className="relative z-10">
           <div className="flex justify-between items-start mb-6">
@@ -88,11 +87,11 @@ const Dashboard: React.FC<DashboardProps> = ({ user: propUser, account: propAcco
                 {localAccount.label}
                 <svg className="w-3 h-3 text-white/40" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" /></svg>
               </div>
-              <div className="text-[11px] font-mono opacity-60 tracking-tighter">XX-{localAccount.accountNumber.slice(-4)}</div>
+              <div className="text-[11px] font-mono opacity-60 tracking-tighter bg-black/10 px-2 py-0.5 rounded backdrop-blur-sm inline-block">XX-{localAccount.accountNumber.slice(-4)}</div>
             </div>
             <button 
               onClick={(e) => { e.stopPropagation(); setShowBalance(!showBalance); }}
-              className="p-2 bg-white/10 rounded-full active:bg-white/20 transition-all"
+              className="p-2 bg-white/10 rounded-full active:bg-white/20 transition-all backdrop-blur-md border border-white/10"
             >
               {showBalance ? (
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
@@ -110,13 +109,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user: propUser, account: propAcco
           <div className="grid grid-cols-2 gap-3">
             <button 
                onClick={() => navigate('/transfer')}
-               className="bg-white text-[#00366B] font-bold py-3.5 rounded-xl active:scale-[0.97] transition-all text-xs uppercase tracking-wider"
+               className="bg-white text-[#00366B] font-extrabold py-3.5 rounded-xl active:scale-[0.97] transition-all text-[11px] uppercase tracking-widest shadow-lg"
             >
               Money Transfer
             </button>
             <button 
               onClick={() => navigate('/history')}
-              className="bg-[#E41B23] text-white font-bold py-3.5 rounded-xl active:scale-[0.97] transition-all text-xs uppercase tracking-wider shadow-lg"
+              className="bg-[#E41B23] text-white font-extrabold py-3.5 rounded-xl active:scale-[0.97] transition-all text-[11px] uppercase tracking-widest shadow-xl border border-white/10"
             >
               View Statement
             </button>
@@ -136,7 +135,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user: propUser, account: propAcco
         <QuickAction icon="dots" label="More" />
       </div>
 
-      {/* Bills */}
+      {/* Bills Section */}
       {upcomingBills.length > 0 && (
         <div className="animate-in fade-in duration-700 delay-200">
           <h3 className="text-slate-500 text-[10px] font-bold uppercase mb-3 px-1 tracking-widest">Upcoming Payments</h3>
@@ -154,7 +153,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user: propUser, account: propAcco
                 </div>
                 <div className="text-right">
                   <div className="text-sm font-bold text-slate-900">₹{bill.amount.toLocaleString()}</div>
-                  <button className="text-[10px] font-bold text-[#E41B23] uppercase tracking-tighter border border-[#E41B23]/20 px-2 py-0.5 rounded mt-1">Pay</button>
+                  <button className="text-[10px] font-bold text-[#E41B23] uppercase tracking-tighter border border-[#E41B23]/20 px-2 py-0.5 rounded mt-1">Pay Now</button>
                 </div>
               </div>
             ))}
@@ -163,7 +162,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user: propUser, account: propAcco
       )}
 
       {/* History */}
-      <div className="animate-in fade-in duration-700 delay-300">
+      <div className="animate-in fade-in duration-700 delay-300 pb-8">
         <div className="flex justify-between items-center mb-3 px-1">
           <h3 className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Last Transactions</h3>
           <button onClick={() => navigate('/history')} className="text-[#00366B] text-[10px] font-bold uppercase tracking-tighter">See All</button>
@@ -171,14 +170,14 @@ const Dashboard: React.FC<DashboardProps> = ({ user: propUser, account: propAcco
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden divide-y divide-slate-50">
           {recentTransactions.length > 0 ? (
             recentTransactions.map((tx) => (
-              <div key={tx.id} className="p-4 flex justify-between items-center" onClick={() => navigate('/history')}>
+              <div key={tx.id} className="p-4 flex justify-between items-center active:bg-slate-50" onClick={() => navigate('/history')}>
                 <div className="flex items-center gap-4">
                   <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm shadow-sm ${tx.amount > 0 ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-[#00366B]'}`}>
                     {tx.receiverDetails.name.charAt(0)}
                   </div>
                   <div>
                     <div className="font-bold text-sm text-slate-800">{tx.receiverDetails.name}</div>
-                    <div className="text-slate-400 text-[10px]">{new Date(tx.timestamp).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</div>
+                    <div className="text-slate-400 text-[10px] uppercase font-bold tracking-tighter">{new Date(tx.timestamp).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} • {tx.receiverDetails.type}</div>
                   </div>
                 </div>
                 <div className="text-right">
@@ -193,7 +192,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user: propUser, account: propAcco
             ))
           ) : (
             <div className="p-10 text-center">
-              <p className="text-slate-400 text-[11px] font-medium">No recent transactions</p>
+              <p className="text-slate-400 text-[11px] font-bold uppercase tracking-widest">No recent transactions</p>
             </div>
           )}
         </div>
@@ -221,7 +220,7 @@ const QuickAction: React.FC<{ icon: string; label: string; onClick?: () => void 
           {icons[icon]}
         </svg>
       </div>
-      <span className="text-[9px] font-bold text-slate-600 uppercase tracking-tighter text-center">{label}</span>
+      <span className="text-[9px] font-bold text-slate-600 uppercase tracking-tighter text-center leading-tight">{label}</span>
     </button>
   );
 };

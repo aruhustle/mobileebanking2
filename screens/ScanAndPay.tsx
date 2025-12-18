@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { VirtualAccount, TransactionType, TransactionStatus, Transaction, User } from '../types';
@@ -52,11 +51,11 @@ const ScanAndPay: React.FC<ScanAndPayProps> = ({ account: propAccount }) => {
     };
   }, [scanning]);
 
-  const handleSimulateScan = () => {
+  // Handle detection via manual tap for testing on desktop environments
+  const handleManualScan = () => {
     const mockUrl = 'upi://pay?pa=merchant@hdfcbank&pn=HDFC%20Cafe&am=150.00&tn=Coffee';
     const result = parseUPIUrl(mockUrl);
     setParsed(result);
-    // Pre-fill amount if available in QR
     if (result.amount) {
       setAmount(result.amount);
     } else {
@@ -65,9 +64,13 @@ const ScanAndPay: React.FC<ScanAndPayProps> = ({ account: propAccount }) => {
     setScanning(false);
   };
 
+  const isAmountValid = React.useMemo(() => {
+    const num = parseFloat(amount);
+    return !isNaN(num) && num > 0;
+  }, [amount]);
+
   const handleInitiatePayment = () => {
-    const numAmount = parseFloat(amount);
-    if (!amount || isNaN(numAmount) || numAmount <= 0) {
+    if (!isAmountValid) {
       alert('Please enter a valid amount.');
       return;
     }
@@ -100,9 +103,10 @@ const ScanAndPay: React.FC<ScanAndPayProps> = ({ account: propAccount }) => {
     };
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Realism delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
       db.addTransaction(tx);
       const ledgerEntry = await executeTransaction(tx);
+      // Ensure redirect to receipt screen
       navigate(`/receipt/${ledgerEntry.transactionId}`, { state: { entry: ledgerEntry }, replace: true });
     } catch (err: any) {
       alert(err.message || 'Payment Failed');
@@ -114,26 +118,26 @@ const ScanAndPay: React.FC<ScanAndPayProps> = ({ account: propAccount }) => {
 
   if (showPinScreen && parsed) {
     return (
-      <div className="fixed inset-0 z-[60] bg-white flex flex-col animate-in slide-in-from-bottom duration-300">
+      <div className="fixed inset-0 z-[70] bg-white flex flex-col animate-in slide-in-from-bottom duration-300">
         <header className="p-6 flex items-center justify-between border-b border-slate-100">
           <div className="flex items-center gap-3">
              <HDFCLogo size="sm" />
-             <span className="text-xs font-bold text-[#004c8f] uppercase tracking-widest">Secure UPI PIN</span>
+             <span className="text-xs font-bold text-[#004c8f] uppercase tracking-widest">Verify Secure Pay</span>
           </div>
-          <button onClick={() => setShowPinScreen(false)} className="text-slate-400">
+          <button onClick={() => setShowPinScreen(false)} className="text-slate-400 p-2">
              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l18 18" /></svg>
           </button>
         </header>
         
         <div className="p-8 text-center flex-1">
-          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Paying to</div>
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Paying To</div>
           <div className="text-lg font-bold text-slate-800 mb-1">{parsed.name}</div>
           <div className="text-[10px] font-mono text-slate-400 uppercase mb-8">{parsed.vpa}</div>
           
           <div className="text-4xl font-black text-[#004c8f] mb-12">₹{parseFloat(amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
           
           <div className="space-y-4 max-w-xs mx-auto">
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Enter 4-digit UPI PIN</label>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Re-enter UPI PIN to confirm</label>
             <div className="flex justify-center gap-4">
               <input 
                 type="password"
@@ -155,11 +159,8 @@ const ScanAndPay: React.FC<ScanAndPayProps> = ({ account: propAccount }) => {
            >
              {processing ? (
                <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-             ) : 'Authorize Payment'}
+             ) : 'Confirm & Authorize'}
            </button>
-           <p className="text-center mt-4 text-[9px] text-slate-400 font-bold uppercase tracking-widest">
-              Secured by HDFC Bank Multi-Layered Protection
-           </p>
         </div>
       </div>
     );
@@ -168,7 +169,7 @@ const ScanAndPay: React.FC<ScanAndPayProps> = ({ account: propAccount }) => {
   if (!scanning && parsed) {
     const isFixed = !!parsed.amount;
     return (
-      <div className="p-6 space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 min-h-full">
+      <div className="p-6 space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 min-h-full bg-[#F4F6F8]">
         <div className="text-center py-6">
           <div className="w-20 h-20 bg-[#004c8f]/5 text-[#004c8f] rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-[#004c8f]/10 shadow-inner">
             <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
@@ -192,12 +193,12 @@ const ScanAndPay: React.FC<ScanAndPayProps> = ({ account: propAccount }) => {
                 placeholder="0"
               />
             </div>
-            {isFixed && <p className="text-[10px] text-green-600 font-bold uppercase mt-2 tracking-widest">Fixed Merchant Amount</p>}
+            {isFixed && <p className="text-[10px] text-green-600 font-bold uppercase mt-2 tracking-widest">Merchant Requested Amount</p>}
           </div>
           
           {parsed.note && (
-             <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-widest">Merchant Note</label>
+             <div className="pt-2 border-t border-slate-50">
+                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 tracking-widest">Note from Merchant</label>
                 <p className="text-sm font-medium text-slate-600 italic">"{parsed.note}"</p>
              </div>
           )}
@@ -205,11 +206,11 @@ const ScanAndPay: React.FC<ScanAndPayProps> = ({ account: propAccount }) => {
 
         <div className="space-y-4 pt-4">
           <button 
-            disabled={!amount || parseFloat(amount) <= 0 || processing}
+            disabled={!isAmountValid || processing}
             onClick={handleInitiatePayment}
             className="w-full py-5 bg-[#ed1c24] text-white rounded-2xl font-bold text-lg tracking-widest shadow-xl active:bg-red-700 transition-all flex items-center justify-center gap-3 disabled:opacity-50 uppercase"
           >
-            Pay Now
+            Review & Pay
           </button>
           
           <button 
@@ -238,15 +239,16 @@ const ScanAndPay: React.FC<ScanAndPayProps> = ({ account: propAccount }) => {
       </div>
 
       <div className="absolute bottom-12 left-0 right-0 px-8 flex flex-col gap-4">
-        <button 
-          onClick={handleSimulateScan}
-          className="w-full py-4 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-xl font-bold text-xs uppercase tracking-widest active:bg-white/20 transition-all"
+        {/* Simplified manual trigger for testing environments */}
+        <div 
+          onClick={handleManualScan}
+          className="w-full py-10 text-center text-white/10 active:text-white/20 font-bold text-[10px] uppercase tracking-widest cursor-pointer pointer-events-auto"
         >
-          DEMO: SIMULATE QR DETECTION
-        </button>
+          Tap here to test detection
+        </div>
         <button 
           onClick={() => navigate('/dashboard')}
-          className="w-full py-2 text-white/40 font-bold text-[10px] uppercase tracking-widest"
+          className="w-full py-3 bg-white/10 backdrop-blur-lg text-white rounded-xl font-bold text-[10px] uppercase tracking-widest active:bg-white/20 transition-all"
         >
           Cancel
         </button>
