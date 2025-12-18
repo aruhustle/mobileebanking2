@@ -1,48 +1,69 @@
 
 import { db } from './database';
-import { LedgerEntry, Transaction, TransactionStatus } from './types';
+import { LedgerEntry, Transaction, TransactionStatus, LedgerDirection, TransactionType } from './types';
 
+/**
+ * Account balance must be calculated as:
+ * SUM(all ledger.amount entries for that account)
+ */
 export const calculateBalance = (accountId: string): number => {
   return db.getLedger()
-    .filter(entry => entry.accountId === accountId)
+    .filter(entry => entry.accountId === accountId && entry.status === TransactionStatus.SUCCESS)
     .reduce((sum, entry) => sum + entry.amount, 0);
 };
 
 export const executeTransaction = async (tx: Transaction) => {
-  const senderBalance = calculateBalance(tx.senderAccountId);
+  const balanceBefore = calculateBalance(tx.senderAccountId);
   
-  if (senderBalance < tx.amount) {
+  // Prevent transactions if balance_before < transaction_amount (for debits)
+  if (balanceBefore < tx.amount) {
     db.updateTransactionStatus(tx.id, TransactionStatus.FAILED);
     throw new Error('Insufficient balance');
   }
 
   try {
-    // 1. Debit Sender
-    const debit: LedgerEntry = {
-      id: Math.random().toString(36).substr(2, 9),
-      accountId: tx.senderAccountId,
-      transactionId: tx.id,
-      amount: -tx.amount,
-      timestamp: Date.now()
-    };
-    db.addLedgerEntry(debit);
+    const timestamp = Date.now();
+    const userId = db.getAccounts().find(a => a.id === tx.senderAccountId)?.userId || '';
 
-    // 2. Credit Receiver (In a real system, this would happen at the receiver's bank/account)
-    // For this simulation, we simulate the completion
+    // Create Immutable Ledger Entry
+    const debitEntry: LedgerEntry = {
+      id: 'led-' + Math.random().toString(36).substr(2, 9),
+      transactionId: tx.id,
+      userId: userId,
+      accountId: tx.senderAccountId,
+      amount: -tx.amount, // MONEY SENT = NEGATIVE
+      direction: LedgerDirection.DEBIT,
+      balanceBefore: balanceBefore,
+      balanceAfter: balanceBefore - tx.amount,
+      timestamp: timestamp,
+      paymentMethod: tx.receiverDetails.type,
+      counterpartyDetails: {
+        name: tx.receiverDetails.name,
+        id: tx.receiverDetails.upiId || tx.receiverDetails.accountNumber
+      },
+      status: TransactionStatus.SUCCESS
+    };
+
+    // Rollback check: If balance_after != balance_before + amount, fatal error
+    if (debitEntry.balanceAfter !== debitEntry.balanceBefore + debitEntry.amount) {
+      throw new Error('Ledger parity mismatch. Transaction aborted.');
+    }
+
+    db.addLedgerEntry(debitEntry);
     db.updateTransactionStatus(tx.id, TransactionStatus.SUCCESS);
     
     // Add success notification
     db.addNotification({
-      id: Math.random().toString(36).substr(2, 9),
-      userId: db.getAccounts().find(a => a.id === tx.senderAccountId)?.userId || '',
+      id: 'notif-' + Math.random().toString(36).substr(2, 9),
+      userId: userId,
       title: 'Payment Successful',
-      message: `Sent ₹${tx.amount.toLocaleString()} to ${tx.receiverDetails.name}`,
+      message: `₹${tx.amount.toLocaleString()} ${debitEntry.direction} to ${tx.receiverDetails.name}. Ref: ${tx.referenceId}`,
       type: 'SUCCESS',
       isRead: false,
-      timestamp: Date.now()
+      timestamp: timestamp
     });
 
-    return true;
+    return debitEntry;
   } catch (error) {
     db.updateTransactionStatus(tx.id, TransactionStatus.FAILED);
     throw error;

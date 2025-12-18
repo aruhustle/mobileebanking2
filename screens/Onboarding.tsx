@@ -1,8 +1,10 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, VirtualAccount, LedgerEntry } from '../types';
+// Add LedgerDirection, TransactionType, and TransactionStatus to imports
+import { User, VirtualAccount, LedgerEntry, LedgerDirection, TransactionType, TransactionStatus } from '../types';
 import { db } from '../database';
+import { HDFCLogo } from '../App';
 
 interface OnboardingProps {
   onComplete: (user: User) => void;
@@ -18,10 +20,9 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
 
   const handleFinish = async () => {
     setLoading(true);
-    // Simulate API delay
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise(r => setTimeout(r, 1800));
 
-    const userId = Math.random().toString(36).substr(2, 9);
+    const userId = Math.floor(10000000 + Math.random() * 90000000).toString();
     const user: User = {
       id: userId,
       mobile,
@@ -33,22 +34,29 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     };
 
     const account: VirtualAccount = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: 'acc-' + Math.floor(1000000000000 + Math.random() * 9000000000000),
       userId,
-      accountNumber: '4005' + Math.floor(Math.random() * 90000000),
-      ifsc: 'NEOB0004005',
+      accountNumber: '50100' + Math.floor(10000000 + Math.random() * 90000000),
+      ifsc: 'HDFC0000001',
       type: 'SAVINGS',
-      label: 'Main Savings',
+      label: 'Savings Account',
       isFrozen: false
     };
 
-    // Initialize with demo balance
+    // Fix: Added missing properties to conform to LedgerEntry interface
     const openingEntry: LedgerEntry = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: 'led-' + Math.random().toString(36).substr(2, 9),
+      transactionId: 'OPENING_CREDIT',
+      userId: userId,
       accountId: account.id,
-      transactionId: 'OPENING',
-      amount: 5000.00, // Reduced from demo to simulate fresh start
-      timestamp: Date.now()
+      amount: 5000.00,
+      direction: LedgerDirection.CREDIT,
+      balanceBefore: 0,
+      balanceAfter: 5000.00,
+      timestamp: Date.now(),
+      paymentMethod: TransactionType.BANK_TRANSFER,
+      counterpartyDetails: { name: 'Account Opening' },
+      status: TransactionStatus.SUCCESS
     };
 
     db.addUser(user);
@@ -56,10 +64,10 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     db.addLedgerEntry(openingEntry);
     
     db.addNotification({
-      id: Math.random().toString(36).substr(2, 9),
+      id: 'notif-' + Math.random().toString(36).substr(2, 9),
       userId,
-      title: 'Welcome to NeoBank!',
-      message: 'Your account is ready with a ₹5,000.00 opening balance.',
+      title: 'Digital Account Activated',
+      message: 'Welcome to HDFC Bank. Your account is ready for use.',
       type: 'SUCCESS',
       isRead: false,
       timestamp: Date.now()
@@ -71,75 +79,87 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   };
 
   return (
-    <div className="min-h-screen bg-white p-8 flex flex-col justify-center animate-in fade-in duration-500">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-[#00366B] mb-2">Join NeoBank</h1>
-        <p className="text-slate-500">Experience banking redefined.</p>
+    <div className="min-h-screen bg-white p-8 flex flex-col items-center justify-center animate-in fade-in duration-500">
+      <div className="mb-12 text-center">
+        <div className="flex justify-center mb-6">
+          <HDFCLogo size="xl" />
+        </div>
+        <h1 className="text-3xl font-bold text-[#00366B] mb-2 tracking-tight">HDFC Bank</h1>
+        <p className="text-slate-400 font-medium uppercase tracking-widest text-[10px]">MobileBanking Registration</p>
       </div>
 
-      <div className="space-y-6">
+      <div className="w-full max-sm space-y-8">
         {step === 1 && (
-          <div className="space-y-4 animate-in slide-in-from-right-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Mobile Number</label>
-              <input 
-                type="tel"
-                value={mobile}
-                onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
-                placeholder="Enter 10-digit mobile"
-                className="w-full p-4 bg-slate-50 rounded-xl border border-slate-100 focus:border-[#00366B] focus:ring-1 focus:ring-[#00366B] outline-none transition-all"
-              />
+          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+            <div className="border-b-2 border-slate-100 focus-within:border-[#00366B] transition-colors py-2">
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Mobile Number</label>
+              <div className="flex items-center">
+                 <span className="font-bold text-slate-400 mr-2">+91</span>
+                  <input 
+                    type="tel"
+                    value={mobile}
+                    onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
+                    placeholder="9727180908"
+                    className="w-full text-xl font-bold text-slate-800 outline-none bg-transparent"
+                  />
+              </div>
             </div>
             <button 
               disabled={mobile.length < 10}
               onClick={() => setStep(2)}
-              className="w-full py-4 bg-[#00366B] text-white rounded-xl font-bold disabled:opacity-50 active:scale-95 transition-transform"
+              className="w-full py-4 bg-[#E41B23] text-white rounded-[4px] font-bold tracking-widest active:bg-red-700 transition-colors disabled:opacity-50"
             >
-              Verify Number
+              CONTINUE
             </button>
             <button 
               onClick={() => navigate('/')}
-              className="w-full py-2 text-slate-400 font-bold text-sm"
+              className="w-full py-2 text-slate-400 font-bold text-xs uppercase tracking-widest"
             >
-              Back to Login
+              Cancel
             </button>
           </div>
         )}
 
         {step === 2 && (
-          <div className="space-y-4 animate-in slide-in-from-right-4">
-             <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Full Name</label>
+          <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+             <div className="border-b-2 border-slate-100 focus-within:border-[#00366B] transition-colors py-2">
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Full Name</label>
               <input 
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="As per PAN/Aadhar"
-                className="w-full p-4 bg-slate-50 rounded-xl border border-slate-100 focus:border-[#00366B] focus:ring-1 focus:ring-[#00366B] outline-none transition-all"
+                placeholder="Armaan Thakkar"
+                className="w-full text-xl font-bold text-slate-800 outline-none bg-transparent"
               />
             </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Set 4-Digit Login PIN</label>
+            <div className="border-b-2 border-slate-100 focus-within:border-[#00366B] transition-colors py-2">
+              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Set 4-Digit Login PIN</label>
               <input 
                 type="password"
                 maxLength={4}
                 value={pin}
                 onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
                 placeholder="••••"
-                className="w-full p-4 bg-slate-50 rounded-xl border border-slate-100 focus:border-[#00366B] focus:ring-1 focus:ring-[#00366B] outline-none transition-all text-center text-2xl tracking-[1em]"
+                className="w-full text-xl font-bold text-slate-800 outline-none bg-transparent text-center tracking-[1em]"
               />
             </div>
             <button 
               disabled={!name || pin.length < 4 || loading}
               onClick={handleFinish}
-              className="w-full py-4 bg-[#E41B23] text-white rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-transform"
+              className="w-full py-4 bg-[#E41B23] text-white rounded-[4px] font-bold tracking-widest flex items-center justify-center gap-2 active:bg-red-700 transition-colors"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : 'Complete Onboarding'}
+              ) : 'PROCEED TO ACCOUNT'}
             </button>
           </div>
         )}
+      </div>
+
+      <div className="absolute bottom-12 text-center px-12 opacity-40">
+        <p className="text-[9px] font-bold uppercase tracking-[0.2em] leading-relaxed">
+          Subject to terms, conditions and bank verification policies. Regulated by Reserve Bank of India.
+        </p>
       </div>
     </div>
   );

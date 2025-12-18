@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { User, VirtualAccount } from '../types';
 import { calculateBalance } from '../ledgerEngine';
 import { db } from '../database';
@@ -10,9 +10,26 @@ interface DashboardProps {
   account: VirtualAccount | null;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ user, account }) => {
+const Dashboard: React.FC<DashboardProps> = ({ user: propUser, account: propAccount }) => {
   const [showBalance, setShowBalance] = useState(false);
+  const [localUser, setLocalUser] = useState<User | null>(propUser);
+  const [localAccount, setLocalAccount] = useState<VirtualAccount | null>(propAccount);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Sync props or fetch from session/db
+    if (!localUser) {
+      const stored = sessionStorage.getItem('active_user');
+      if (stored) setLocalUser(JSON.parse(stored));
+    }
+  }, [propUser]);
+
+  useEffect(() => {
+    if (localUser && !localAccount) {
+      const accounts = db.getAccounts().filter(a => a.userId === localUser.id);
+      if (accounts.length > 0) setLocalAccount(accounts[0]);
+    }
+  }, [localUser, localAccount]);
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -22,8 +39,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, account }) => {
   }, []);
 
   const balance = useMemo(() => {
-    return account ? calculateBalance(account.id) : 0;
-  }, [account]);
+    return localAccount ? calculateBalance(localAccount.id) : 0;
+  }, [localAccount]);
 
   const recentTransactions = useMemo(() => {
     return db.getTransactions().slice(0, 3);
@@ -33,7 +50,16 @@ const Dashboard: React.FC<DashboardProps> = ({ user, account }) => {
     return db.getBills().filter(b => b.status === 'DUE').slice(0, 2);
   }, []);
 
-  if (!user || !account) return null;
+  if (!localUser || !localAccount) {
+    return (
+      <div className="p-4 space-y-6">
+        <div className="h-40 bg-slate-200 rounded-2xl shimmer"></div>
+        <div className="grid grid-cols-4 gap-4">
+           {[1,2,3,4].map(i => <div key={i} className="h-20 bg-slate-200 rounded-xl shimmer"></div>)}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 bg-[#F4F6F8] min-h-full">
@@ -41,7 +67,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, account }) => {
       <div className="flex justify-between items-center px-1">
         <div>
           <h2 className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">{greeting}</h2>
-          <h1 className="text-xl font-bold text-[#00366B]">{user.name.split(' ')[0]}</h1>
+          <h1 className="text-xl font-bold text-[#00366B]">{localUser.name.split(' ')[0]}</h1>
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full border border-slate-200 shadow-sm">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -49,16 +75,16 @@ const Dashboard: React.FC<DashboardProps> = ({ user, account }) => {
         </div>
       </div>
 
-      {/* Official Balance Card */}
+      {/* Balance Card */}
       <div className="bg-[#00366B] rounded-2xl p-6 text-white shadow-xl relative overflow-hidden ring-1 ring-white/10 group active:scale-[0.99] transition-transform duration-200">
         <div className="relative z-10">
           <div className="flex justify-between items-start mb-6">
             <div>
               <div className="text-white/70 text-[10px] font-bold uppercase tracking-[0.2em] mb-1 flex items-center gap-2">
-                {account.label}
+                {localAccount.label}
                 <svg className="w-3 h-3 text-white/40" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" /></svg>
               </div>
-              <div className="text-[11px] font-mono opacity-60 tracking-tighter">XX-{account.accountNumber.slice(-4)}</div>
+              <div className="text-[11px] font-mono opacity-60 tracking-tighter">XX-{localAccount.accountNumber.slice(-4)}</div>
             </div>
             <button 
               onClick={(e) => { e.stopPropagation(); setShowBalance(!showBalance); }}
@@ -84,7 +110,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, account }) => {
             >
               Money Transfer
             </button>
-            <button className="bg-[#E41B23] text-white font-bold py-3.5 rounded-xl active:scale-[0.97] transition-all text-xs uppercase tracking-wider shadow-lg">
+            <button 
+              onClick={() => navigate('/history')}
+              className="bg-[#E41B23] text-white font-bold py-3.5 rounded-xl active:scale-[0.97] transition-all text-xs uppercase tracking-wider shadow-lg"
+            >
               View Statement
             </button>
           </div>
@@ -93,7 +122,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, account }) => {
         <div className="absolute left-[-5%] bottom-[-5%] w-32 h-32 bg-white/[0.02] rounded-full" />
       </div>
 
-      {/* Quick Services Grid */}
+      {/* Services Grid */}
       <div className="grid grid-cols-4 gap-y-6">
         <QuickAction icon="qrcode" label="Scan & Pay" onClick={() => navigate('/scan')} />
         <QuickAction icon="user" label="UPI ID" onClick={() => navigate('/transfer')} />
@@ -105,7 +134,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, account }) => {
         <QuickAction icon="dots" label="More" />
       </div>
 
-      {/* Upcoming Bills Section */}
+      {/* Bills */}
       {upcomingBills.length > 0 && (
         <div className="animate-in fade-in duration-700 delay-200">
           <h3 className="text-slate-500 text-[10px] font-bold uppercase mb-3 px-1 tracking-widest">Upcoming Payments</h3>
@@ -118,12 +147,12 @@ const Dashboard: React.FC<DashboardProps> = ({ user, account }) => {
                   </div>
                   <div>
                     <div className="text-sm font-bold text-slate-800">{bill.billerName}</div>
-                    <div className="text-[10px] text-slate-400 font-medium">Due in {Math.round((bill.dueDate - Date.now()) / 86400000)} days • {bill.category}</div>
+                    <div className="text-[10px] text-slate-400 font-medium">Due in {Math.round((bill.dueDate - Date.now()) / 86400000)} days</div>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-sm font-bold text-slate-900">₹{bill.amount.toLocaleString()}</div>
-                  <button className="text-[10px] font-bold text-[#E41B23] uppercase tracking-tighter border border-[#E41B23]/20 px-2 py-0.5 rounded mt-1 active:bg-[#E41B23] active:text-white transition-all">Pay Now</button>
+                  <button className="text-[10px] font-bold text-[#E41B23] uppercase tracking-tighter border border-[#E41B23]/20 px-2 py-0.5 rounded mt-1">Pay</button>
                 </div>
               </div>
             ))}
@@ -131,23 +160,23 @@ const Dashboard: React.FC<DashboardProps> = ({ user, account }) => {
         </div>
       )}
 
-      {/* Recent Transactions Preview */}
+      {/* History */}
       <div className="animate-in fade-in duration-700 delay-300">
         <div className="flex justify-between items-center mb-3 px-1">
           <h3 className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Last Transactions</h3>
-          <button onClick={() => navigate('/history')} className="text-[#00366B] text-[10px] font-bold uppercase tracking-tighter hover:underline">See All</button>
+          <button onClick={() => navigate('/history')} className="text-[#00366B] text-[10px] font-bold uppercase tracking-tighter">See All</button>
         </div>
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden divide-y divide-slate-50">
           {recentTransactions.length > 0 ? (
             recentTransactions.map((tx) => (
-              <div key={tx.id} className="p-4 flex justify-between items-center active:bg-slate-50 transition-colors" onClick={() => navigate('/history')}>
+              <div key={tx.id} className="p-4 flex justify-between items-center" onClick={() => navigate('/history')}>
                 <div className="flex items-center gap-4">
                   <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm shadow-sm ${tx.amount > 0 ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-[#00366B]'}`}>
                     {tx.receiverDetails.name.charAt(0)}
                   </div>
                   <div>
                     <div className="font-bold text-sm text-slate-800">{tx.receiverDetails.name}</div>
-                    <div className="text-slate-400 text-[10px] font-medium">{new Date(tx.timestamp).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} • {tx.receiverDetails.type}</div>
+                    <div className="text-slate-400 text-[10px]">{new Date(tx.timestamp).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</div>
                   </div>
                 </div>
                 <div className="text-right">

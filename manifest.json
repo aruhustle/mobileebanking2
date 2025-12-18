@@ -1,0 +1,23 @@
+
+{
+  "name": "HDFC Bank MobileBanking",
+  "short_name": "HDFC Bank",
+  "description": "Official HDFC Bank Mobile Banking Experience",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#00366B",
+  "icons": [
+    {
+      "src": "https://www.hdfcbank.com/content/api/contentstream-id/723fb80a-2dde-42a3-9793-7ae1be57c87f/6f6f9662-7945-4228-86d1-4470d036329e/Footer/About%20Us/Logos/HDFC_Bank_Logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://www.hdfcbank.com/content/api/contentstream-id/723fb80a-2dde-42a3-9793-7ae1be57c87f/6f6f9662-7945-4228-86d1-4470d036329e/Footer/About%20Us/Logos/HDFC_Bank_Logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

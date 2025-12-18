@@ -1,7 +1,7 @@
 
-import { User, VirtualAccount, Transaction, LedgerEntry, Notification, Bill } from './types';
+import { User, VirtualAccount, Transaction, LedgerEntry, Notification, Bill, LedgerDirection, TransactionStatus, TransactionType } from './types';
 
-const STORAGE_KEY = 'neobank_data_v2';
+const STORAGE_KEY = 'hdfc_bank_prod_v2'; // Bump version for new schema
 
 interface DatabaseSchema {
   users: User[];
@@ -12,12 +12,12 @@ interface DatabaseSchema {
   bills: Bill[];
 }
 
-const DEMO_USER_ID = 'demo-armaan';
-const DEMO_ACCOUNT_ID = 'demo-acc-nre';
+const CUSTOMER_ID = '82719405';
+const ACCOUNT_ID = 'acc-5010042728350';
 
 const initialDb: DatabaseSchema = {
   users: [{
-    id: DEMO_USER_ID,
+    id: CUSTOMER_ID,
     mobile: '9727180908',
     name: 'Armaan Thakkar',
     pin: '1809',
@@ -26,46 +26,53 @@ const initialDb: DatabaseSchema = {
     onboardedAt: 1700000000000
   }],
   accounts: [{
-    id: DEMO_ACCOUNT_ID,
-    userId: DEMO_USER_ID,
+    id: ACCOUNT_ID,
+    userId: CUSTOMER_ID,
     accountNumber: '5010042728350',
     ifsc: 'HDFC0000001',
     type: 'SAVINGS',
-    label: 'NRE Savings Account',
+    label: 'Savings Account',
     isFrozen: false
   }],
   transactions: [],
   ledger: [{
-    id: 'seed-ledger-1',
-    accountId: DEMO_ACCOUNT_ID,
-    transactionId: 'INITIAL_DEPOSIT',
-    amount: 1427283.50,
-    timestamp: Date.now() - 86400000 * 30 // 30 days ago
+    id: 'ledger-seed-1',
+    transactionId: 'DEPOSIT_INIT',
+    userId: CUSTOMER_ID,
+    accountId: ACCOUNT_ID,
+    amount: 1427283.50, // Positive = Credit
+    direction: LedgerDirection.CREDIT,
+    balanceBefore: 0,
+    balanceAfter: 1427283.50,
+    timestamp: Date.now() - 86400000 * 30,
+    paymentMethod: TransactionType.BANK_TRANSFER,
+    counterpartyDetails: { name: 'Initial Deposit' },
+    status: TransactionStatus.SUCCESS
   }],
   notifications: [{
     id: 'notif-welcome',
-    userId: DEMO_USER_ID,
-    title: 'Welcome to HDFC Bank',
-    message: 'Securely manage your finances with the official MobileBanking app.',
+    userId: CUSTOMER_ID,
+    title: 'Welcome to MobileBanking',
+    message: 'Access your HDFC Bank account securely and conveniently on the go.',
     type: 'SUCCESS',
     isRead: false,
     timestamp: Date.now()
   }],
   bills: [
     {
-      id: 'bill-1',
-      billerName: 'Reliance Energy',
-      category: 'Electricity',
+      id: 'bill-adani',
+      billerName: 'Adani Electricity',
+      category: 'Utilities',
       amount: 4250.00,
-      dueDate: Date.now() + 86400000 * 5, // 5 days from now
+      dueDate: Date.now() + 86400000 * 5,
       status: 'DUE'
     },
     {
-      id: 'bill-2',
-      billerName: 'HDFC Credit Card',
+      id: 'bill-cc',
+      billerName: 'HDFC Bank Credit Card',
       category: 'Credit Card',
       amount: 12840.50,
-      dueDate: Date.now() + 86400000 * 2, // 2 days from now
+      dueDate: Date.now() + 86400000 * 2,
       status: 'DUE'
     }
   ]
@@ -78,15 +85,7 @@ class Database {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
-        const parsed = JSON.parse(stored);
-        this.data = {
-          users: parsed.users || initialDb.users,
-          accounts: parsed.accounts || initialDb.accounts,
-          transactions: parsed.transactions || initialDb.transactions,
-          ledger: parsed.ledger || initialDb.ledger,
-          notifications: parsed.notifications || initialDb.notifications,
-          bills: parsed.bills || initialDb.bills
-        };
+        this.data = JSON.parse(stored);
       } catch (e) {
         this.data = initialDb;
       }
@@ -122,7 +121,6 @@ class Database {
   addLedgerEntry(entry: LedgerEntry) { this.data.ledger.push(entry); this.persist(); }
 
   getNotifications(userId: string) {
-    if (!userId) return [];
     return this.data.notifications.filter(n => n.userId === userId);
   }
   addNotification(n: Notification) {

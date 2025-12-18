@@ -15,6 +15,11 @@ export enum TransactionType {
   SELF_TRANSFER = 'SELF_TRANSFER'
 }
 
+export enum LedgerDirection {
+  DEBIT = 'DEBIT',
+  CREDIT = 'CREDIT'
+}
+
 export interface User {
   id: string;
   mobile: string;
@@ -37,10 +42,20 @@ export interface VirtualAccount {
 
 export interface LedgerEntry {
   id: string;
-  accountId: string;
   transactionId: string;
-  amount: number; // Positive for credit, negative for debit
+  userId: string;
+  accountId: string;
+  amount: number; // Signed value: Negative for Debit, Positive for Credit
+  direction: LedgerDirection;
+  balanceBefore: number;
+  balanceAfter: number;
   timestamp: number;
+  paymentMethod: TransactionType;
+  counterpartyDetails: {
+    name: string;
+    id?: string; // UPI ID or Account Number
+  };
+  status: TransactionStatus;
 }
 
 export interface Transaction {

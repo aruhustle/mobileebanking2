@@ -15,21 +15,27 @@ import Notifications from './screens/Notifications';
 import Profile from './screens/Profile';
 import Invest from './screens/Invest';
 import Borrow from './screens/Borrow';
+import Receipt from './screens/Receipt';
 
 // Components
 import Sidebar from './components/Sidebar';
 
-export const HDFCLogo: React.FC<{ size?: 'sm' | 'md' | 'lg' | 'xl' }> = ({ size = 'md' }) => {
+export const HDFCLogo: React.FC<{ size?: 'sm' | 'md' | 'lg' | 'xl'; className?: string }> = ({ size = 'md', className = "" }) => {
   const dimensions = {
     sm: 'w-6 h-6',
     md: 'w-10 h-10',
     lg: 'w-16 h-16',
-    xl: 'w-20 h-20'
+    xl: 'w-24 h-24'
   };
+  
   return (
-    <div className={`${dimensions[size]} bg-[#00366B] relative flex items-center justify-center rounded-[2px] overflow-hidden flex-shrink-0 border-[1.5px] border-[#00366B]`}>
-       <div className="absolute w-[80%] h-[15%] bg-[#E41B23]"></div>
-       <div className="absolute w-[15%] h-[80%] bg-[#E41B23]"></div>
+    <div className={`${dimensions[size]} ${className} flex-shrink-0`}>
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+        <rect width="100" height="100" fill="#00366B" />
+        <rect x="15" y="15" width="70" height="70" fill="white" />
+        <rect x="23" y="42" width="54" height="16" fill="#E41B23" />
+        <rect x="42" y="23" width="16" height="54" fill="#E41B23" />
+      </svg>
     </div>
   );
 }
@@ -48,7 +54,7 @@ const AppContent: React.FC = () => {
       const accounts = db.getAccounts().filter(a => a.userId === currentUser.id);
       if (accounts.length > 0) setActiveAccount(accounts[0]);
     }
-  }, []);
+  }, [location.pathname]);
 
   const handleLogout = () => {
     sessionStorage.removeItem('active_user');
@@ -76,18 +82,18 @@ const AppContent: React.FC = () => {
 
       <div className="flex-1 flex flex-col relative overflow-hidden">
         {user && !isPublicRoute && (
-          <header className="bg-[#00366B] text-white px-4 py-3 flex items-center justify-between shadow-md z-10 safe-top">
+          <header className="bg-[#00366B] text-white px-4 py-4 flex items-center justify-between shadow-lg z-10 safe-top">
             <button 
               onClick={() => setIsSidebarOpen(true)}
               className="p-1 active:opacity-60 transition-opacity"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
             <div className="flex items-center gap-2">
               <HDFCLogo size="sm" />
-              <div className="text-lg font-bold tracking-tight">HDFC Bank</div>
+              <div className="text-xl font-bold tracking-tight">HDFC Bank</div>
             </div>
             <button 
               onClick={() => navigate('/notifications')}
@@ -103,7 +109,7 @@ const AppContent: React.FC = () => {
           </header>
         )}
 
-        <main className="flex-1 overflow-y-auto no-scrollbar pb-20">
+        <main className="flex-1 overflow-y-auto no-scrollbar pb-24">
           <Routes>
             <Route path="/" element={<Login onLogin={(u) => { setUser(u); navigate('/dashboard'); }} />} />
             <Route path="/onboard" element={<Onboarding onComplete={(u) => { setUser(u); navigate('/dashboard'); }} />} />
@@ -115,20 +121,21 @@ const AppContent: React.FC = () => {
             <Route path="/profile" element={<Profile user={user} />} />
             <Route path="/invest" element={<Invest user={user} />} />
             <Route path="/borrow" element={<Borrow user={user} />} />
+            <Route path="/receipt/:id" element={<Receipt />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
 
         {user && !isPublicRoute && (
-          <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center py-2 px-4 shadow-lg safe-bottom z-20">
+          <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center py-3 px-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] safe-bottom z-20 h-16 sm:h-20">
             <NavItem icon="home" label="Home" active={location.pathname === '/dashboard'} onClick={() => navigate('/dashboard')} />
             <NavItem icon="pay" label="Pay" active={location.pathname === '/transfer'} onClick={() => navigate('/transfer')} />
             <div 
                onClick={() => navigate('/scan')}
-               className="bg-[#E41B23] p-4 rounded-full -mt-10 shadow-lg ring-4 ring-[#F4F6F8] cursor-pointer active:scale-95 transition-transform"
+               className="bg-[#E41B23] p-4 rounded-full -mt-10 shadow-xl ring-4 ring-[#F4F6F8] cursor-pointer active:scale-90 transition-transform"
             >
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v-4m6 0h2m-6 0h-2m10 5V7a2 2 0 00-2-2h-3m-6 0H7a2 2 0 00-2 2v3m14 6v3a2 2 0 01-2 2h-3m-6 0H7a2 2 0 01-2-2v-3" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v-4m6 0h2m-6 0h-2m10 5V7a2 2 0 00-2-2h-3m-6 0H7a2 2 0 00-2 2v3m14 6v3a2 2 0 01-2 2h-3m-6 0H7a2 2 0 01-2-2v-3" />
               </svg>
             </div>
             <NavItem icon="history" label="History" active={location.pathname === '/history'} onClick={() => navigate('/history')} />
@@ -149,11 +156,11 @@ const NavItem: React.FC<{ icon: string; label: string; active: boolean; onClick:
   };
 
   return (
-    <button onClick={onClick} className={`flex flex-col items-center gap-0.5 transition-colors ${active ? 'text-[#00366B]' : 'text-slate-400'}`}>
+    <button onClick={onClick} className={`flex flex-col items-center gap-0.5 transition-all active:scale-95 ${active ? 'text-[#00366B]' : 'text-slate-400'}`}>
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
         {icons[icon]}
       </svg>
-      <span className="text-[10px] font-medium">{label}</span>
+      <span className="text-[10px] font-bold uppercase tracking-tighter">{label}</span>
     </button>
   );
 };

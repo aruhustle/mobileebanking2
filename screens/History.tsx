@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
-import { User, VirtualAccount, TransactionType, Transaction } from '../types';
+import { useNavigate } from 'react-router-dom';
+import { User, VirtualAccount, TransactionType, LedgerEntry, LedgerDirection } from '../types';
 import { db } from '../database';
 
 interface HistoryProps {
@@ -8,32 +9,36 @@ interface HistoryProps {
   account: VirtualAccount | null;
 }
 
-const History: React.FC<HistoryProps> = ({ user, account }) => {
+const History: React.FC<HistoryProps> = ({ user }) => {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<TransactionType | 'ALL'>('ALL');
+  const navigate = useNavigate();
 
-  const groupedTransactions = useMemo(() => {
-    let list = db.getTransactions();
+  const groupedEntries = useMemo(() => {
+    let list = db.getLedger().filter(e => e.userId === user?.id);
+    
     if (search) {
       const s = search.toLowerCase();
-      list = list.filter(tx => 
-        tx.receiverDetails.name.toLowerCase().includes(s) || 
-        tx.receiverDetails.upiId?.toLowerCase().includes(s) ||
-        tx.note?.toLowerCase().includes(s)
+      list = list.filter(e => 
+        e.counterpartyDetails.name.toLowerCase().includes(s) || 
+        e.counterpartyDetails.id?.toLowerCase().includes(s)
       );
     }
     if (filter !== 'ALL') {
-      list = list.filter(tx => tx.receiverDetails.type === filter);
+      list = list.filter(e => e.paymentMethod === filter);
     }
 
-    const groups: Record<string, Transaction[]> = {};
-    list.forEach(tx => {
-      const month = new Date(tx.timestamp).toLocaleString('default', { month: 'long', year: 'numeric' });
+    // Sort by most recent first
+    list.sort((a, b) => b.timestamp - a.timestamp);
+
+    const groups: Record<string, LedgerEntry[]> = {};
+    list.forEach(e => {
+      const month = new Date(e.timestamp).toLocaleString('default', { month: 'long', year: 'numeric' });
       if (!groups[month]) groups[month] = [];
-      groups[month].push(tx);
+      groups[month].push(e);
     });
     return groups;
-  }, [search, filter]);
+  }, [search, filter, user]);
 
   return (
     <div className="flex flex-col h-full bg-[#F4F6F8]">
@@ -46,7 +51,7 @@ const History: React.FC<HistoryProps> = ({ user, account }) => {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search payees, notes..."
+            placeholder="Search by name or ID..."
             className="w-full pl-10 pr-4 py-2.5 bg-slate-100 rounded-xl outline-none focus:ring-1 focus:ring-[#00366B] text-xs font-medium"
           />
         </div>
@@ -54,42 +59,47 @@ const History: React.FC<HistoryProps> = ({ user, account }) => {
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
           <FilterTab active={filter === 'ALL'} label="All" onClick={() => setFilter('ALL')} />
           <FilterTab active={filter === TransactionType.UPI} label="UPI" onClick={() => setFilter(TransactionType.UPI)} />
-          <FilterTab active={filter === TransactionType.BANK_TRANSFER} label="Bank Transfer" onClick={() => setFilter(TransactionType.BANK_TRANSFER)} />
+          <FilterTab active={filter === TransactionType.BANK_TRANSFER} label="Bank" onClick={() => setFilter(TransactionType.BANK_TRANSFER)} />
           <FilterTab active={filter === TransactionType.BILL_PAY} label="Bills" onClick={() => setFilter(TransactionType.BILL_PAY)} />
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto no-scrollbar p-4 space-y-6">
-        {Object.keys(groupedTransactions).length > 0 ? (
-          // Add explicit type assertion to Object.entries to fix "Property 'map' does not exist on type 'unknown'"
-          (Object.entries(groupedTransactions) as [string, Transaction[]][]).map(([month, txs]) => (
+        {Object.keys(groupedEntries).length > 0 ? (
+          (Object.entries(groupedEntries) as [string, LedgerEntry[]][]).map(([month, entries]) => (
             <div key={month} className="space-y-3">
               <h3 className="text-slate-500 text-[10px] font-bold uppercase tracking-widest sticky top-0 bg-[#F4F6F8]/95 backdrop-blur-sm py-1 z-0">{month}</h3>
               <div className="space-y-2">
-                {txs.map((tx) => (
-                  <div key={tx.id} className="bg-white p-4 rounded-2xl border border-slate-100 flex justify-between items-center active:scale-[0.99] transition-transform shadow-sm group">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm shadow-sm ${tx.amount > 0 ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-[#00366B]'}`}>
-                        {tx.receiverDetails.name.charAt(0)}
-                      </div>
-                      <div>
-                        <div className="font-bold text-sm text-slate-800">{tx.receiverDetails.name}</div>
-                        <div className="text-slate-400 text-[9px] font-bold uppercase tracking-tighter">
-                          {new Date(tx.timestamp).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} • {tx.receiverDetails.type}
+                {entries.map((entry) => {
+                  const isDebit = entry.direction === LedgerDirection.DEBIT;
+                  return (
+                    <div 
+                      key={entry.id} 
+                      onClick={() => navigate(`/receipt/${entry.transactionId}`, { state: { entry } })}
+                      className="bg-white p-4 rounded-2xl border border-slate-100 flex justify-between items-center active:scale-[0.99] transition-transform shadow-sm group cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm shadow-sm ${!isDebit ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-[#00366B]'}`}>
+                          {entry.counterpartyDetails.name.charAt(0)}
                         </div>
-                        {tx.note && <div className="text-slate-500 text-[10px] mt-0.5 line-clamp-1 italic">"{tx.note}"</div>}
+                        <div>
+                          <div className="font-bold text-sm text-slate-800">{entry.counterpartyDetails.name}</div>
+                          <div className="text-slate-400 text-[9px] font-bold uppercase tracking-tighter">
+                            {new Date(entry.timestamp).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} • {entry.paymentMethod}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className={`font-bold text-sm ${isDebit ? 'text-[#E41B23]' : 'text-green-600'}`}>
+                          {isDebit ? '–' : '+'}₹{Math.abs(entry.amount).toLocaleString('en-IN')}
+                        </div>
+                        <div className="text-[8px] font-bold text-slate-300 uppercase mt-1 tracking-widest">
+                          ID: {entry.transactionId.slice(-6)}
+                        </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className={`font-bold text-sm ${tx.amount < 0 ? 'text-[#E41B23]' : 'text-green-600'}`}>
-                        {tx.amount < 0 ? '-' : '+'}₹{Math.abs(tx.amount).toLocaleString('en-IN')}
-                      </div>
-                      <div className={`text-[8px] font-extrabold px-1.5 py-0.5 rounded uppercase mt-1 tracking-widest border ${tx.status === 'SUCCESS' ? 'border-green-100 text-green-600 bg-green-50/50' : 'border-red-100 text-red-600 bg-red-50/50'}`}>
-                        {tx.status}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           ))
@@ -98,7 +108,7 @@ const History: React.FC<HistoryProps> = ({ user, account }) => {
             <svg className="w-16 h-16 opacity-20 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            <p className="text-xs font-bold uppercase tracking-widest">No transactions found</p>
+            <p className="text-xs font-bold uppercase tracking-widest">No ledger entries found</p>
           </div>
         )}
       </div>
