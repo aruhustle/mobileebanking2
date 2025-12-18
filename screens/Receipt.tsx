@@ -21,7 +21,7 @@ const Receipt: React.FC = () => {
 
   if (!entry) {
     return (
-      <div className="p-12 text-center space-y-4">
+      <div className="p-12 text-center space-y-4 pt-[20vh]">
         <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-300">
           <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
         </div>
@@ -56,16 +56,16 @@ const Receipt: React.FC = () => {
       <div className="max-w-md mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 relative print:shadow-none print:border-none">
         
         {/* HDFC Bank Watermark Background */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none overflow-hidden">
-          <div className="scale-[6] rotate-[-15deg]">
-             <HDFCLogo size="xl" />
+        <div className="absolute inset-0 flex items-center justify-center opacity-[0.05] pointer-events-none select-none overflow-hidden">
+          <div className="scale-[4] rotate-[-15deg]">
+             <img src="./icon.png" alt="" className="w-24 h-24 grayscale brightness-50" />
           </div>
         </div>
 
         {/* Receipt Header */}
         <div className="bg-[#004c8f] p-8 text-center text-white relative z-10">
           <div className="flex justify-between items-center mb-6">
-            <HDFCLogo size="sm" className="rounded-sm" />
+            <HDFCLogo size="sm" />
             <div className="text-[10px] font-bold tracking-widest uppercase opacity-60">e-Receipt</div>
           </div>
           

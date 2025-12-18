@@ -65,11 +65,10 @@ const Transfer: React.FC<TransferProps> = ({ account: propAccount }) => {
       db.addTransaction(tx);
       const ledgerEntry = await executeTransaction(tx);
       
-      // Navigate to detailed receipt
-      navigate('/receipt', { state: { entry: ledgerEntry } });
+      // FIX: Use parameterized route and pass ledger entry state
+      navigate(`/receipt/${ledgerEntry.transactionId}`, { state: { entry: ledgerEntry } });
     } catch (err: any) {
       alert(err.message || 'Transaction could not be completed.');
-    } finally {
       setProcessing(false);
     }
   };

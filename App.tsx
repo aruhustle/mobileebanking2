@@ -29,26 +29,39 @@ export const HDFCLogo: React.FC<{ size?: 'sm' | 'md' | 'lg' | 'xl'; className?: 
   };
   
   return (
-    <div className={`${dimensions[size]} ${className} flex-shrink-0`}>
-      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-sm">
-        {/* The Base Blue Square */}
-        <rect width="100" height="100" fill="#004c8f" />
-        
-        {/* The White Inner Square - Creating the blue border */}
-        <rect x="18" y="18" width="64" height="64" fill="white" />
-        
-        {/* The Red Cross - Precisely centered and touching edges of white square */}
-        <rect x="41" y="18" width="18" height="64" fill="#ed1c24" />
-        <rect x="18" y="41" width="64" height="18" fill="#ed1c24" />
-      </svg>
+    <div className={`${dimensions[size]} ${className} flex-shrink-0 flex items-center justify-center bg-white rounded-sm overflow-hidden`}>
+      <img src="./icon.png" alt="HDFC Bank" className="w-full h-full object-contain" />
     </div>
   );
 }
 
 const AppContent: React.FC = () => {
-  const [user, setUser] = useState<User | null>(null);
+  // CRITICAL: Hydrate state immediately to prevent redirect to login on navigation/refresh
+  const [user, setUser] = useState<User | null>(() => {
+    const stored = sessionStorage.getItem('active_user');
+    try {
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeAccount, setActiveAccount] = useState<VirtualAccount | null>(null);
+  
+  const [activeAccount, setActiveAccount] = useState<VirtualAccount | null>(() => {
+    const storedUser = sessionStorage.getItem('active_user');
+    if (storedUser) {
+      try {
+        const u = JSON.parse(storedUser);
+        const accounts = db.getAccounts().filter(a => a.userId === u.id);
+        return accounts.length > 0 ? accounts[0] : null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -75,7 +88,7 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen w-full bg-[#F4F6F8] overflow-hidden select-none">
+    <div className="flex h-screen w-full bg-[#F4F6F8] overflow-hidden select-none fixed inset-0">
       {user && !isPublicRoute && (
         <Sidebar 
           isOpen={isSidebarOpen} 
@@ -87,7 +100,7 @@ const AppContent: React.FC = () => {
 
       <div className="flex-1 flex flex-col relative overflow-hidden">
         {user && !isPublicRoute && (
-          <header className="bg-[#004c8f] text-white px-4 py-4 flex items-center justify-between shadow-lg z-10 safe-top">
+          <header className="bg-[#004c8f] text-white px-4 pt-[env(safe-area-inset-top)] pb-4 flex items-center justify-between shadow-lg z-10">
             <button 
               onClick={() => setIsSidebarOpen(true)}
               className="p-1 active:opacity-60 transition-opacity"
@@ -132,12 +145,12 @@ const AppContent: React.FC = () => {
         </main>
 
         {user && !isPublicRoute && (
-          <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center py-3 px-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] safe-area-bottom z-20 h-16 sm:h-20">
+          <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center pt-3 pb-[calc(env(safe-area-inset-bottom)+12px)] px-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] z-20 h-auto sm:h-20">
             <NavItem icon="home" label="Home" active={location.pathname === '/dashboard'} onClick={() => navigate('/dashboard')} />
             <NavItem icon="pay" label="Pay" active={location.pathname === '/transfer'} onClick={() => navigate('/transfer')} />
             <div 
                onClick={() => navigate('/scan')}
-               className="bg-[#ed1c24] p-4 rounded-full -mt-10 shadow-xl ring-4 ring-[#F4F6F8] cursor-pointer active:scale-90 transition-transform"
+               className="bg-[#ed1c24] p-4 rounded-full -mt-12 shadow-xl ring-4 ring-[#F4F6F8] cursor-pointer active:scale-90 transition-transform"
             >
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v-4m6 0h2m-6 0h-2m10 5V7a2 2 0 00-2-2h-3m-6 0H7a2 2 0 00-2 2v3m14 6v3a2 2 0 01-2 2h-3m-6 0H7a2 2 0 01-2-2v-3" />
