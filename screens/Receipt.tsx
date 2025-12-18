@@ -27,7 +27,7 @@ const Receipt: React.FC = () => {
         </div>
         <h3 className="text-slate-800 font-bold">Receipt unavailable</h3>
         <p className="text-slate-400 text-xs">The requested transaction details could not be found.</p>
-        <button onClick={() => navigate('/history')} className="text-[#00366B] font-bold text-xs uppercase tracking-widest pt-4">Back to History</button>
+        <button onClick={() => navigate('/history')} className="text-[#004c8f] font-bold text-xs uppercase tracking-widest pt-4">Back to History</button>
       </div>
     );
   }
@@ -63,16 +63,16 @@ const Receipt: React.FC = () => {
         </div>
 
         {/* Receipt Header */}
-        <div className="bg-[#00366B] p-8 text-center text-white relative z-10">
+        <div className="bg-[#004c8f] p-8 text-center text-white relative z-10">
           <div className="flex justify-between items-center mb-6">
-            <HDFCLogo size="sm" />
+            <HDFCLogo size="sm" className="rounded-sm" />
             <div className="text-[10px] font-bold tracking-widest uppercase opacity-60">e-Receipt</div>
           </div>
           
           <div className="flex justify-center mb-4">
             <div className={`w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-lg`}>
               {isDebit ? (
-                <svg className="w-8 h-8 text-[#E41B23]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-8 h-8 text-[#ed1c24]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                 </svg>
               ) : (
@@ -116,14 +116,14 @@ const Receipt: React.FC = () => {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Transaction Amount</span>
-              <span className={`text-xs font-bold ${isDebit ? 'text-[#E41B23]' : 'text-green-600'}`}>
+              <span className={`text-xs font-bold ${isDebit ? 'text-[#ed1c24]' : 'text-green-600'}`}>
                 {isDebit ? '-' : '+'}₹{Math.abs(entry.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </span>
             </div>
             <div className="h-px bg-slate-200" />
             <div className="flex justify-between items-center">
               <span className="text-[10px] font-bold text-slate-800 uppercase tracking-widest">Closing Balance</span>
-              <span className="text-sm font-black text-[#00366B]">₹{entry.balanceAfter.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              <span className="text-sm font-black text-[#004c8f]">₹{entry.balanceAfter.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
             </div>
           </div>
 
@@ -143,14 +143,14 @@ const Receipt: React.FC = () => {
         <div className="p-6 bg-slate-50 border-t border-slate-100 flex gap-4 relative z-10 print:hidden">
           <button 
             onClick={handleDownload}
-            className="flex-1 py-3.5 bg-white border border-slate-200 rounded-xl text-[#00366B] font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm"
+            className="flex-1 py-3.5 bg-white border border-slate-200 rounded-xl text-[#004c8f] font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
             PDF
           </button>
           <button 
             onClick={handleShare}
-            className="flex-1 py-3.5 bg-[#00366B] rounded-xl text-white font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg"
+            className="flex-1 py-3.5 bg-[#004c8f] rounded-xl text-white font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
             Share

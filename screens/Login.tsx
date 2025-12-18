@@ -77,12 +77,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     return (
       <div className="min-h-screen bg-white flex flex-col safe-top animate-in fade-in duration-300">
         <div className="flex-1 px-8 pt-16 flex flex-col items-center">
-          <HDFCLogo size="xl" />
-          <h1 className="mt-8 text-3xl font-bold text-[#00366B] tracking-tight text-center">HDFC Bank</h1>
+          <HDFCLogo size="xl" className="shadow-lg rounded-sm" />
+          <h1 className="mt-8 text-3xl font-bold text-[#004c8f] tracking-tight text-center">HDFC Bank</h1>
           <p className="mt-1 text-slate-500 text-xs font-bold uppercase tracking-[0.2em] text-center">MobileBanking</p>
           
           <div className="w-full mt-16 space-y-10">
-            <div className="border-b-2 border-slate-100 focus-within:border-[#00366B] transition-colors py-4">
+            <div className="border-b-2 border-slate-100 focus-within:border-[#004c8f] transition-colors py-4">
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Registered Mobile Number</label>
               <div className="flex items-center">
                 <span className="text-slate-800 font-bold text-xl mr-3">+91</span>
@@ -97,12 +97,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               </div>
             </div>
             
-            {error && <p className="text-[#E41B23] text-xs font-bold text-center">{error}</p>}
+            {error && <p className="text-[#ed1c24] text-xs font-bold text-center">{error}</p>}
 
             <button 
               onClick={handleMobileNext}
               disabled={mobile.length < 10}
-              className="w-full py-5 bg-[#E41B23] text-white rounded-xl font-bold text-base tracking-widest shadow-lg active:bg-red-700 transition-colors disabled:opacity-50 uppercase"
+              className="w-full py-5 bg-[#ed1c24] text-white rounded-xl font-bold text-base tracking-widest shadow-lg active:bg-red-700 transition-colors disabled:opacity-50 uppercase"
             >
               Log In
             </button>
@@ -110,7 +110,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             <div className="text-center">
               <button 
                 onClick={() => navigate('/onboard')}
-                className="text-[#00366B] font-bold text-sm"
+                className="text-[#004c8f] font-bold text-sm"
               >
                 Register for Mobile Banking
               </button>
@@ -120,7 +120,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
         <div className="p-10 text-center pb-12 flex flex-col items-center">
           <div className="flex items-center gap-2 mb-3 bg-slate-50 px-4 py-2 rounded-full border border-slate-100">
-            <svg className="w-3 h-3 text-[#00366B]" fill="currentColor" viewBox="0 0 20 20">
+            <svg className="w-3 h-3 text-[#004c8f]" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
             </svg>
             <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">End-to-End Encrypted</span>
@@ -134,11 +134,11 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   return (
     <div className="min-h-screen bg-white flex flex-col safe-top animate-in slide-in-from-right-4 duration-300">
       <div className="flex-1 flex flex-col items-center pt-16 px-8">
-        <HDFCLogo size="md" />
-        <p className="mt-4 text-[#00366B] text-xs font-bold uppercase tracking-widest">Secure Access</p>
+        <HDFCLogo size="md" className="shadow-md rounded-sm" />
+        <p className="mt-4 text-[#004c8f] text-xs font-bold uppercase tracking-widest">Secure Access</p>
         
         <div className="mt-12 text-center">
-          <div className="w-20 h-20 rounded-full bg-[#00366B] flex items-center justify-center text-3xl font-bold text-white mx-auto mb-4 border-4 border-white shadow-xl ring-1 ring-slate-100">
+          <div className="w-20 h-20 rounded-full bg-[#004c8f] flex items-center justify-center text-3xl font-bold text-white mx-auto mb-4 border-4 border-white shadow-xl ring-1 ring-slate-100">
             {identifiedUser?.name.charAt(0)}
           </div>
           <p className="text-slate-400 text-xs font-bold tracking-widest mb-1">
@@ -147,7 +147,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           <h2 className="text-2xl font-bold text-slate-800 tracking-tight">{identifiedUser?.name}</h2>
           <button 
             onClick={() => { setStep('MOBILE'); setPin(''); }}
-            className="mt-3 text-[#00366B] text-[10px] font-bold uppercase tracking-widest border-b border-[#00366B]/20"
+            className="mt-3 text-[#004c8f] text-[10px] font-bold uppercase tracking-widest border-b border-[#004c8f]/20"
           >
             Switch User
           </button>
@@ -157,12 +157,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           {[1, 2, 3, 4].map((i) => (
             <div 
               key={i} 
-              className={`w-4 h-4 rounded-full border-2 border-slate-200 transition-all duration-200 ${pin.length >= i ? 'bg-[#00366B] border-[#00366B] scale-125' : 'bg-transparent'}`} 
+              className={`w-4 h-4 rounded-full border-2 border-slate-200 transition-all duration-200 ${pin.length >= i ? 'bg-[#004c8f] border-[#004c8f] scale-125' : 'bg-transparent'}`} 
             />
           ))}
         </div>
 
-        {error && <p className="mt-8 text-[#E41B23] text-xs font-bold text-center tracking-wide">{error}</p>}
+        {error && <p className="mt-8 text-[#ed1c24] text-xs font-bold text-center tracking-wide">{error}</p>}
 
         {/* Numeric Keypad */}
         <div className="mt-10 grid grid-cols-3 gap-x-10 gap-y-6 w-full max-w-[300px]">
@@ -195,10 +195,10 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         </div>
 
         <div className="mt-12 flex flex-col items-center gap-6">
-          <button className="text-[#00366B] font-bold text-[10px] uppercase tracking-[0.2em]">Forgot PIN?</button>
+          <button className="text-[#004c8f] font-bold text-[10px] uppercase tracking-[0.2em]">Forgot PIN?</button>
           <div className="flex items-center gap-2 opacity-30">
-             <HDFCLogo size="sm" />
-             <span className="text-[10px] font-bold uppercase tracking-widest text-[#00366B]">Secure Banking</span>
+             <HDFCLogo size="sm" className="rounded-sm" />
+             <span className="text-[10px] font-bold uppercase tracking-widest text-[#004c8f]">Secure Banking</span>
           </div>
         </div>
       </div>

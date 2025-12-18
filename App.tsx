@@ -30,11 +30,16 @@ export const HDFCLogo: React.FC<{ size?: 'sm' | 'md' | 'lg' | 'xl'; className?: 
   
   return (
     <div className={`${dimensions[size]} ${className} flex-shrink-0`}>
-      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-        <rect width="100" height="100" fill="#00366B" />
-        <rect x="15" y="15" width="70" height="70" fill="white" />
-        <rect x="23" y="42" width="54" height="16" fill="#E41B23" />
-        <rect x="42" y="23" width="16" height="54" fill="#E41B23" />
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-sm">
+        {/* The Base Blue Square */}
+        <rect width="100" height="100" fill="#004c8f" />
+        
+        {/* The White Inner Square - Creating the blue border */}
+        <rect x="18" y="18" width="64" height="64" fill="white" />
+        
+        {/* The Red Cross - Precisely centered and touching edges of white square */}
+        <rect x="41" y="18" width="18" height="64" fill="#ed1c24" />
+        <rect x="18" y="41" width="64" height="18" fill="#ed1c24" />
       </svg>
     </div>
   );
@@ -82,7 +87,7 @@ const AppContent: React.FC = () => {
 
       <div className="flex-1 flex flex-col relative overflow-hidden">
         {user && !isPublicRoute && (
-          <header className="bg-[#00366B] text-white px-4 py-4 flex items-center justify-between shadow-lg z-10 safe-top">
+          <header className="bg-[#004c8f] text-white px-4 py-4 flex items-center justify-between shadow-lg z-10 safe-top">
             <button 
               onClick={() => setIsSidebarOpen(true)}
               className="p-1 active:opacity-60 transition-opacity"
@@ -103,7 +108,7 @@ const AppContent: React.FC = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
               {user && db.getNotifications(user.id).some(n => !n.isRead) && (
-                <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-[#E41B23] ring-2 ring-[#00366B]" />
+                <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-[#ed1c24] ring-2 ring-[#004c8f]" />
               )}
             </button>
           </header>
@@ -127,12 +132,12 @@ const AppContent: React.FC = () => {
         </main>
 
         {user && !isPublicRoute && (
-          <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center py-3 px-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] safe-bottom z-20 h-16 sm:h-20">
+          <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center py-3 px-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] safe-area-bottom z-20 h-16 sm:h-20">
             <NavItem icon="home" label="Home" active={location.pathname === '/dashboard'} onClick={() => navigate('/dashboard')} />
             <NavItem icon="pay" label="Pay" active={location.pathname === '/transfer'} onClick={() => navigate('/transfer')} />
             <div 
                onClick={() => navigate('/scan')}
-               className="bg-[#E41B23] p-4 rounded-full -mt-10 shadow-xl ring-4 ring-[#F4F6F8] cursor-pointer active:scale-90 transition-transform"
+               className="bg-[#ed1c24] p-4 rounded-full -mt-10 shadow-xl ring-4 ring-[#F4F6F8] cursor-pointer active:scale-90 transition-transform"
             >
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v-4m6 0h2m-6 0h-2m10 5V7a2 2 0 00-2-2h-3m-6 0H7a2 2 0 00-2 2v3m14 6v3a2 2 0 01-2 2h-3m-6 0H7a2 2 0 01-2-2v-3" />
@@ -156,7 +161,7 @@ const NavItem: React.FC<{ icon: string; label: string; active: boolean; onClick:
   };
 
   return (
-    <button onClick={onClick} className={`flex flex-col items-center gap-0.5 transition-all active:scale-95 ${active ? 'text-[#00366B]' : 'text-slate-400'}`}>
+    <button onClick={onClick} className={`flex flex-col items-center gap-0.5 transition-all active:scale-95 ${active ? 'text-[#004c8f]' : 'text-slate-400'}`}>
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
         {icons[icon]}
       </svg>

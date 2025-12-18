@@ -32,9 +32,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, user, onLogout }) =>
       <div 
         className={`fixed top-0 left-0 h-full w-4/5 max-w-[300px] bg-white z-50 transform transition-transform duration-300 ease-out shadow-2xl ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
-        <div className="bg-[#00366B] p-6 text-white safe-top">
+        <div className="bg-[#004c8f] p-6 text-white safe-top">
           <div className="flex items-center gap-4 mb-6">
-            <HDFCLogo size="sm" />
+            <HDFCLogo size="sm" className="rounded-sm shadow-sm" />
             <div className="font-bold text-lg tracking-tight">HDFC Bank</div>
           </div>
           <div className="flex items-center gap-4">
@@ -44,7 +44,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, user, onLogout }) =>
             <div>
               <div className="font-bold text-base leading-tight">{user.name}</div>
               <div className="text-white/60 text-[10px] font-mono mt-1">CU-ID: {user.id.slice(0,8).toUpperCase()}</div>
-              <div className="mt-2 inline-block px-2 py-0.5 rounded-full bg-[#E41B23] text-[9px] font-bold uppercase tracking-widest">
+              <div className="mt-2 inline-block px-2 py-0.5 rounded-full bg-[#ed1c24] text-[9px] font-bold uppercase tracking-widest">
                 Official User
               </div>
             </div>
@@ -58,7 +58,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, user, onLogout }) =>
               onClick={() => { navigate(item.route); onClose(); }}
               className="w-full flex items-center gap-4 p-3 rounded-lg hover:bg-slate-50 active:bg-slate-100 transition-colors text-slate-700 font-semibold text-sm"
             >
-              <svg className="w-5 h-5 text-[#00366B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-[#004c8f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
               </svg>
               {item.label}
@@ -67,7 +67,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, user, onLogout }) =>
           <div className="h-px bg-slate-100 my-4" />
           <button
             onClick={onLogout}
-            className="w-full flex items-center gap-4 p-3 rounded-lg hover:bg-red-50 active:bg-red-100 transition-colors text-[#E41B23] font-bold text-sm"
+            className="w-full flex items-center gap-4 p-3 rounded-lg hover:bg-red-50 active:bg-red-100 transition-colors text-[#ed1c24] font-bold text-sm"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
