@@ -75,8 +75,12 @@ const Dashboard: React.FC<DashboardProps> = ({ user: propUser, account: propAcco
         </div>
       </div>
 
-      {/* Balance Card */}
+      {/* Balance Card - Refined UI */}
       <div className="bg-[#00366B] rounded-2xl p-6 text-white shadow-xl relative overflow-hidden ring-1 ring-white/10 group active:scale-[0.99] transition-transform duration-200">
+        {/* Subtle Background Pattern */}
+        <div className="absolute inset-0 opacity-[0.07] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-white/10 to-transparent rounded-full -mr-20 -mt-20 blur-2xl"></div>
+
         <div className="relative z-10">
           <div className="flex justify-between items-start mb-6">
             <div>
@@ -118,8 +122,6 @@ const Dashboard: React.FC<DashboardProps> = ({ user: propUser, account: propAcco
             </button>
           </div>
         </div>
-        <div className="absolute right-[-10%] top-[-10%] w-48 h-48 bg-white/[0.03] rounded-full" />
-        <div className="absolute left-[-5%] bottom-[-5%] w-32 h-32 bg-white/[0.02] rounded-full" />
       </div>
 
       {/* Services Grid */}
@@ -127,7 +129,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user: propUser, account: propAcco
         <QuickAction icon="qrcode" label="Scan & Pay" onClick={() => navigate('/scan')} />
         <QuickAction icon="user" label="UPI ID" onClick={() => navigate('/transfer')} />
         <QuickAction icon="bank" label="Bank Trf" onClick={() => navigate('/transfer')} />
-        <QuickAction icon="receipt" label="Bills" />
+        <QuickAction icon="receipt" label="Pay Bills" onClick={() => navigate('/notifications')} />
         <QuickAction icon="phone" label="Recharge" />
         <QuickAction icon="credit" label="Cards" />
         <QuickAction icon="invest" label="Mutual Funds" onClick={() => navigate('/invest')} />

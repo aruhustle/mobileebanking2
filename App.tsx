@@ -30,13 +30,15 @@ export const HDFCLogo: React.FC<{ size?: 'sm' | 'md' | 'lg' | 'xl'; className?: 
   
   return (
     <div className={`${dimensions[size]} ${className} flex-shrink-0 flex items-center justify-center bg-white rounded-sm overflow-hidden`}>
-      <img src="./icon.png" alt="HDFC Bank" className="w-full h-full object-contain" />
+      <img src="./icon.png" alt="HDFC Bank" className="w-full h-full object-contain" onError={(e) => {
+        // Fallback if icon.png fails
+        (e.target as HTMLImageElement).src = "https://www.hdfcbank.com/content/api/contentstream-id/723fb80a-2dde-42a3-9793-7ae1be57c87f/6f6f9662-7945-4228-86d1-4470d036329e/Footer/About%20Us/Logos/HDFC_Bank_Logo.png";
+      }} />
     </div>
   );
 }
 
 const AppContent: React.FC = () => {
-  // CRITICAL: Hydrate state immediately to prevent redirect to login on navigation/refresh
   const [user, setUser] = useState<User | null>(() => {
     const stored = sessionStorage.getItem('active_user');
     try {
@@ -47,48 +49,40 @@ const AppContent: React.FC = () => {
   });
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  
-  const [activeAccount, setActiveAccount] = useState<VirtualAccount | null>(() => {
-    const storedUser = sessionStorage.getItem('active_user');
-    if (storedUser) {
-      try {
-        const u = JSON.parse(storedUser);
-        const accounts = db.getAccounts().filter(a => a.userId === u.id);
-        return accounts.length > 0 ? accounts[0] : null;
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  });
+  const [activeAccount, setActiveAccount] = useState<VirtualAccount | null>(null);
 
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    const currentUser = JSON.parse(sessionStorage.getItem('active_user') || 'null');
-    if (currentUser) {
-      setUser(currentUser);
-      const accounts = db.getAccounts().filter(a => a.userId === currentUser.id);
+    if (user) {
+      const accounts = db.getAccounts().filter(a => a.userId === user.id);
       if (accounts.length > 0) setActiveAccount(accounts[0]);
     }
-  }, [location.pathname]);
+  }, [user]);
 
   const handleLogout = () => {
     sessionStorage.removeItem('active_user');
     setUser(null);
     setIsSidebarOpen(false);
-    navigate('/');
+    navigate('/', { replace: true });
   };
 
   const isPublicRoute = ['/', '/onboard'].includes(location.pathname);
+
+  // If user is already logged in and tries to access public routes, redirect to dashboard
+  useEffect(() => {
+    if (user && isPublicRoute) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, isPublicRoute, navigate]);
 
   if (!user && !isPublicRoute) {
     return <Navigate to="/" replace />;
   }
 
   return (
-    <div className="flex h-screen w-full bg-[#F4F6F8] overflow-hidden select-none fixed inset-0">
+    <div className="flex flex-col h-full w-full bg-[#F4F6F8] overflow-hidden select-none font-inter safe-top safe-bottom">
       {user && !isPublicRoute && (
         <Sidebar 
           isOpen={isSidebarOpen} 
@@ -100,7 +94,7 @@ const AppContent: React.FC = () => {
 
       <div className="flex-1 flex flex-col relative overflow-hidden">
         {user && !isPublicRoute && (
-          <header className="bg-[#004c8f] text-white px-4 pt-[env(safe-area-inset-top)] pb-4 flex items-center justify-between shadow-lg z-10">
+          <header className="bg-[#004c8f] text-white px-4 py-4 flex items-center justify-between shadow-lg z-10 flex-shrink-0">
             <button 
               onClick={() => setIsSidebarOpen(true)}
               className="p-1 active:opacity-60 transition-opacity"
@@ -127,10 +121,10 @@ const AppContent: React.FC = () => {
           </header>
         )}
 
-        <main className="flex-1 overflow-y-auto no-scrollbar pb-24">
+        <main className="flex-1 overflow-y-auto no-scrollbar relative">
           <Routes>
-            <Route path="/" element={<Login onLogin={(u) => { setUser(u); navigate('/dashboard'); }} />} />
-            <Route path="/onboard" element={<Onboarding onComplete={(u) => { setUser(u); navigate('/dashboard'); }} />} />
+            <Route path="/" element={<Login onLogin={(u) => setUser(u)} />} />
+            <Route path="/onboard" element={<Onboarding onComplete={(u) => setUser(u)} />} />
             <Route path="/dashboard" element={<Dashboard user={user} account={activeAccount} />} />
             <Route path="/scan" element={<ScanAndPay account={activeAccount} />} />
             <Route path="/transfer" element={<Transfer account={activeAccount} />} />
@@ -140,12 +134,12 @@ const AppContent: React.FC = () => {
             <Route path="/invest" element={<Invest user={user} />} />
             <Route path="/borrow" element={<Borrow user={user} />} />
             <Route path="/receipt/:id" element={<Receipt />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </main>
 
         {user && !isPublicRoute && (
-          <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around items-center pt-3 pb-[calc(env(safe-area-inset-bottom)+12px)] px-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] z-20 h-auto sm:h-20">
+          <nav className="bg-white border-t border-slate-200 flex justify-around items-center pt-3 pb-8 px-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] z-20 flex-shrink-0">
             <NavItem icon="home" label="Home" active={location.pathname === '/dashboard'} onClick={() => navigate('/dashboard')} />
             <NavItem icon="pay" label="Pay" active={location.pathname === '/transfer'} onClick={() => navigate('/transfer')} />
             <div 

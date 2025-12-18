@@ -33,7 +33,6 @@ const Receipt: React.FC = () => {
   }
 
   const isDebit = entry.direction === LedgerDirection.DEBIT;
-  const statusColor = entry.status === TransactionStatus.SUCCESS ? 'text-green-600' : 'text-red-600';
 
   const handleDownload = () => {
     window.print();
@@ -43,7 +42,7 @@ const Receipt: React.FC = () => {
     if (navigator.share) {
       navigator.share({
         title: 'HDFC Bank Transaction Receipt',
-        text: `Transaction of ₹${Math.abs(entry.amount).toLocaleString()} to ${entry.counterpartyDetails.name} was successful. Ref: ${entry.transactionId}`,
+        text: `Transaction of ₹${Math.abs(entry.amount).toLocaleString()} to ${entry.counterpartyDetails.name} was successful. Ref: ${entry.upiRefId || entry.transactionId}`,
         url: window.location.href
       }).catch(console.error);
     } else {
@@ -58,7 +57,7 @@ const Receipt: React.FC = () => {
         {/* HDFC Bank Watermark Background */}
         <div className="absolute inset-0 flex items-center justify-center opacity-[0.05] pointer-events-none select-none overflow-hidden">
           <div className="scale-[4] rotate-[-15deg]">
-             <img src="./icon.png" alt="" className="w-24 h-24 grayscale brightness-50" />
+             <img src="https://www.hdfcbank.com/content/api/contentstream-id/723fb80a-2dde-42a3-9793-7ae1be57c87f/6f6f9662-7945-4228-86d1-4470d036329e/Footer/About%20Us/Logos/HDFC_Bank_Logo.png" alt="" className="w-24 h-24 grayscale brightness-50" />
           </div>
         </div>
 
@@ -83,7 +82,7 @@ const Receipt: React.FC = () => {
             </div>
           </div>
 
-          <h2 className="text-lg font-bold uppercase tracking-[0.2em] opacity-90">Transaction {entry.status}</h2>
+          <h2 className="text-lg font-bold uppercase tracking-[0.2em] opacity-90">Payment {entry.status}</h2>
           
           <div className="text-4xl font-black tracking-tighter mt-4 flex items-center justify-center gap-1">
             <span className="text-2xl font-light opacity-60">₹</span>
@@ -100,41 +99,22 @@ const Receipt: React.FC = () => {
           <div className="grid grid-cols-2 gap-x-4 gap-y-6">
             <ReceiptField label="Beneficiary" value={entry.counterpartyDetails.name} />
             <ReceiptField label="Recipient ID" value={entry.counterpartyDetails.id || 'N/A'} />
-            <ReceiptField label="Transaction ID" value={entry.transactionId} />
-            <ReceiptField label="Reference No." value={entry.id.toUpperCase()} />
+            <ReceiptField label="UPI Ref ID" value={entry.upiRefId || `TXN${entry.transactionId.slice(-8).toUpperCase()}`} />
+            <ReceiptField label="UTR Number" value={entry.utrNumber || `UTR${Math.floor(1000000000 + Math.random() * 9000000000)}`} />
             <ReceiptField label="Date" value={new Date(entry.timestamp).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })} />
             <ReceiptField label="Time" value={new Date(entry.timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })} />
           </div>
 
           <div className="h-px bg-slate-100 my-4" />
 
-          {/* Ledger Parity Verification */}
-          <div className="bg-slate-50 rounded-2xl p-4 space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Opening Balance</span>
-              <span className="text-xs font-bold text-slate-700">₹{entry.balanceBefore.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Transaction Amount</span>
-              <span className={`text-xs font-bold ${isDebit ? 'text-[#ed1c24]' : 'text-green-600'}`}>
-                {isDebit ? '-' : '+'}₹{Math.abs(entry.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-              </span>
-            </div>
-            <div className="h-px bg-slate-200" />
-            <div className="flex justify-between items-center">
-              <span className="text-[10px] font-bold text-slate-800 uppercase tracking-widest">Closing Balance</span>
-              <span className="text-sm font-black text-[#004c8f]">₹{entry.balanceAfter.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-            </div>
-          </div>
-
-          <div className="pt-4">
+          <div className="pt-2 text-center">
             <div className="flex items-center justify-center gap-2 mb-4">
                <div className="h-px bg-slate-100 flex-1" />
-               <span className="text-[8px] font-bold text-slate-300 uppercase tracking-[0.3em]">Official Receipt</span>
+               <HDFCLogo size="sm" />
                <div className="h-px bg-slate-100 flex-1" />
             </div>
-            <p className="text-[9px] text-slate-400 leading-relaxed font-medium text-center">
-              This is a digitally generated transaction confirmation. HDFC Bank will never ask for your confidential information like OTP, PIN or CVV. Always verify recipient details before making payments.
+            <p className="text-[9px] text-slate-400 leading-relaxed font-bold uppercase tracking-widest">
+              Secured by HDFC Bank MobileBanking. This receipt is digitally generated and does not require a physical signature.
             </p>
           </div>
         </div>
@@ -160,20 +140,10 @@ const Receipt: React.FC = () => {
       
       <div className="flex flex-col items-center mt-6 gap-4 print:hidden">
         <button 
-          onClick={() => {
-             const txId = entry.transactionId;
-             navigator.clipboard.writeText(txId);
-             alert('Transaction ID copied');
-          }}
-          className="text-slate-400 font-bold text-[9px] uppercase tracking-widest hover:text-slate-600"
-        >
-          Copy Transaction ID: <span className="text-slate-500">{entry.transactionId}</span>
-        </button>
-        <button 
           onClick={() => navigate('/history')}
-          className="px-8 py-3 bg-slate-200 text-slate-600 rounded-full font-bold text-[10px] uppercase tracking-widest active:scale-95 transition-all"
+          className="px-8 py-3 bg-white text-[#004c8f] border border-slate-200 rounded-full font-bold text-[10px] uppercase tracking-widest active:scale-95 transition-all shadow-sm"
         >
-          Back to Statement
+          View Statement
         </button>
       </div>
     </div>

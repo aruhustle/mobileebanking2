@@ -12,6 +12,9 @@ export const calculateBalance = (accountId: string): number => {
     .reduce((sum, entry) => sum + entry.amount, 0);
 };
 
+const generateUpiRefId = () => `TXN${Math.floor(1000000000 + Math.random() * 9000000000)}`;
+const generateUtrNumber = () => `UTR${Math.floor(1000000000 + Math.random() * 9000000000)}`;
+
 export const executeTransaction = async (tx: Transaction) => {
   const balanceBefore = calculateBalance(tx.senderAccountId);
   
@@ -25,6 +28,10 @@ export const executeTransaction = async (tx: Transaction) => {
     const timestamp = Date.now();
     const userId = db.getAccounts().find(a => a.id === tx.senderAccountId)?.userId || '';
 
+    // Generate specific IDs requested
+    const upiRefId = generateUpiRefId();
+    const utrNumber = generateUtrNumber();
+
     // Create Immutable Ledger Entry
     const debitEntry: LedgerEntry = {
       id: 'led-' + Math.random().toString(36).substr(2, 9),
@@ -37,6 +44,8 @@ export const executeTransaction = async (tx: Transaction) => {
       balanceAfter: balanceBefore - tx.amount,
       timestamp: timestamp,
       paymentMethod: tx.receiverDetails.type,
+      upiRefId,
+      utrNumber,
       counterpartyDetails: {
         name: tx.receiverDetails.name,
         id: tx.receiverDetails.upiId || tx.receiverDetails.accountNumber
@@ -57,7 +66,7 @@ export const executeTransaction = async (tx: Transaction) => {
       id: 'notif-' + Math.random().toString(36).substr(2, 9),
       userId: userId,
       title: 'Payment Successful',
-      message: `₹${tx.amount.toLocaleString()} ${debitEntry.direction} to ${tx.receiverDetails.name}. Ref: ${tx.referenceId}`,
+      message: `₹${tx.amount.toLocaleString()} ${debitEntry.direction} to ${tx.receiverDetails.name}. Ref: ${upiRefId}`,
       type: 'SUCCESS',
       isRead: false,
       timestamp: timestamp

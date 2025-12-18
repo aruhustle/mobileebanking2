@@ -51,6 +51,8 @@ export interface LedgerEntry {
   balanceAfter: number;
   timestamp: number;
   paymentMethod: TransactionType;
+  upiRefId?: string;
+  utrNumber?: string;
   counterpartyDetails: {
     name: string;
     id?: string; // UPI ID or Account Number
@@ -73,6 +75,8 @@ export interface Transaction {
   status: TransactionStatus;
   timestamp: number;
   referenceId: string;
+  upiRefId?: string;
+  utrNumber?: string;
 }
 
 export interface Notification {
