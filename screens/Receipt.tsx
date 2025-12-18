@@ -56,7 +56,8 @@ const Receipt: React.FC = () => {
   };
 
   const handleCopyId = () => {
-    navigator.clipboard.writeText(entry.upiRefId || entry.transactionId);
+    const textToCopy = entry.upiRefId || entry.transactionId;
+    navigator.clipboard.writeText(textToCopy);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -64,21 +65,43 @@ const Receipt: React.FC = () => {
   const handleShare = () => {
     const shareText = `Transaction Successful! Paid ₹${Math.abs(entry.amount).toLocaleString()} to ${entry.counterpartyDetails.name}. Ref: ${entry.upiRefId || entry.transactionId}`;
     if (navigator.share) {
-      navigator.share({ title: 'HDFC Transaction Receipt', text: shareText, url: window.location.href }).catch(() => {});
+      navigator.share({ 
+        title: 'HDFC Bank Transaction Receipt', 
+        text: shareText, 
+        url: window.location.href.split('#')[0] // Clean URL for sharing
+      }).catch((e) => {
+        console.error('Share failed', e);
+        // Fallback to clipboard
+        navigator.clipboard.writeText(shareText);
+        alert('Details copied to clipboard');
+      });
     } else {
       navigator.clipboard.writeText(shareText);
-      alert('Copied to clipboard');
+      alert('Transaction details copied to clipboard');
     }
   };
 
   return (
-    <div className="min-h-full bg-white animate-in fade-in duration-500 overflow-y-auto pb-24 no-scrollbar">
+    <div className="min-h-full bg-white animate-in fade-in duration-500 overflow-y-auto pb-32 no-scrollbar relative">
+      {/* Top Bar / Header */}
+      <div className="flex justify-between items-center px-6 pt-6 pb-2 sticky top-0 bg-white z-30">
+        <button onClick={() => navigate(-1)} className="text-slate-400">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+        </button>
+        <button 
+          onClick={() => navigate('/dashboard')}
+          className="text-[#004c8f] font-extrabold text-[11px] uppercase tracking-widest px-4 py-2 bg-slate-50 rounded-full"
+        >
+          Done
+        </button>
+      </div>
+
       {/* Receipt Card Container */}
       <div className="max-w-md mx-auto print:p-0">
         
         {/* Header Section */}
-        <div className="flex flex-col items-center pt-10 pb-6 px-6">
-          <HDFCLogo size="lg" className="mb-6" />
+        <div className="flex flex-col items-center pb-6 px-6">
+          <HDFCLogo size="lg" className="mb-4" />
           <div className="flex items-center gap-2 mb-2">
             <div className={`w-2 h-2 rounded-full ${entry.status === 'SUCCESS' ? 'bg-green-500' : 'bg-red-500'}`}></div>
             <h1 className="text-xl font-black text-slate-800 tracking-tight">Transaction {entry.status === 'SUCCESS' ? 'Successful' : 'Failed'}</h1>
@@ -86,7 +109,7 @@ const Receipt: React.FC = () => {
           <div className={`text-4xl font-black tracking-tight mt-4 ${isDebit ? 'text-[#ed1c24]' : 'text-green-600'}`}>
             {isDebit ? '–' : '+'}₹{Math.abs(entry.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
           </div>
-          <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-2">
+          <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-2 text-center">
             {entry.paymentMethod} • {new Date(entry.timestamp).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
           </p>
         </div>
@@ -96,7 +119,7 @@ const Receipt: React.FC = () => {
           <div className="flex justify-between items-start mb-4">
             <div>
               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Recipient Details</div>
-              <div className="text-base font-bold text-slate-800">{entry.counterpartyDetails.name}</div>
+              <div className="text-base font-bold text-slate-800 leading-tight">{entry.counterpartyDetails.name}</div>
               <div className="text-xs font-medium text-slate-500 mt-0.5">{maskId(entry.counterpartyDetails.id)}</div>
             </div>
             <div className="text-right">
@@ -141,17 +164,17 @@ const Receipt: React.FC = () => {
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="p-12 text-center">
+        {/* Footer info */}
+        <div className="p-12 text-center pb-24">
            <p className="text-[9px] text-slate-300 leading-relaxed font-bold uppercase tracking-[0.1em]">
-            This is a computer generated digital receipt and does not require a physical signature.
-            Payments are processed securely via HDFC Bank's multi-layered gateway.
+            This is a computer generated digital receipt and does not require a physical signature.<br/>
+            Payments are processed securely via HDFC Bank gateway.
           </p>
         </div>
       </div>
 
-      {/* Floating Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-slate-100 flex gap-3 print:hidden shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
+      {/* Floating Action Bar - Ensuring high z-index and fixed position */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-md border-t border-slate-100 flex gap-3 print:hidden shadow-[0_-10px_25px_rgba(0,0,0,0.06)] z-[100]">
         <button 
           onClick={handleCopyId}
           className="flex-1 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-600 font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all"

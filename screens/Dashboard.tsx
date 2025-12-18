@@ -1,6 +1,5 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
-import { User, VirtualAccount } from '../types';
+import { User, VirtualAccount, LedgerDirection } from '../types';
 import { calculateBalance } from '../ledgerEngine';
 import { db } from '../database';
 import { useNavigate } from 'react-router-dom';
@@ -39,11 +38,15 @@ const Dashboard: React.FC<DashboardProps> = ({ user: propUser, account: propAcco
 
   const balance = useMemo(() => {
     return localAccount ? calculateBalance(localAccount.id) : 0;
-  }, [localAccount]);
+  }, [localAccount, localUser]);
 
-  const recentTransactions = useMemo(() => {
-    return db.getTransactions().slice(0, 3);
-  }, []);
+  const recentEntries = useMemo(() => {
+    if (!localUser) return [];
+    return db.getLedger()
+      .filter(e => e.userId === localUser.id)
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, 3);
+  }, [localUser]);
 
   const upcomingBills = useMemo(() => {
     return db.getBills().filter(b => b.status === 'DUE').slice(0, 2);
@@ -168,28 +171,37 @@ const Dashboard: React.FC<DashboardProps> = ({ user: propUser, account: propAcco
           <button onClick={() => navigate('/history')} className="text-[#00366B] text-[10px] font-bold uppercase tracking-tighter">See All</button>
         </div>
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden divide-y divide-slate-50">
-          {recentTransactions.length > 0 ? (
-            recentTransactions.map((tx) => (
-              <div key={tx.id} className="p-4 flex justify-between items-center active:bg-slate-50" onClick={() => navigate('/history')}>
-                <div className="flex items-center gap-4">
-                  <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm shadow-sm ${tx.amount > 0 ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-[#00366B]'}`}>
-                    {tx.receiverDetails.name.charAt(0)}
+          {recentEntries.length > 0 ? (
+            recentEntries.map((entry) => {
+              const isDebit = entry.direction === LedgerDirection.DEBIT;
+              return (
+                <div 
+                  key={entry.id} 
+                  className="p-4 flex justify-between items-center active:bg-slate-50 cursor-pointer" 
+                  onClick={() => navigate(`/receipt/${entry.transactionId}`, { state: { entry } })}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm shadow-sm ${!isDebit ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-[#00366B]'}`}>
+                      {entry.counterpartyDetails.name.charAt(0)}
+                    </div>
+                    <div>
+                      <div className="font-bold text-sm text-slate-800">{entry.counterpartyDetails.name}</div>
+                      <div className="text-slate-400 text-[10px] uppercase font-bold tracking-tighter">
+                        {new Date(entry.timestamp).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} • {entry.paymentMethod}
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="font-bold text-sm text-slate-800">{tx.receiverDetails.name}</div>
-                    <div className="text-slate-400 text-[10px] uppercase font-bold tracking-tighter">{new Date(tx.timestamp).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} • {tx.receiverDetails.type}</div>
+                  <div className="text-right">
+                    <div className={`font-bold text-sm ${isDebit ? 'text-[#E41B23]' : 'text-green-600'}`}>
+                      {isDebit ? '–' : '+'}₹{Math.abs(entry.amount).toLocaleString('en-IN')}
+                    </div>
+                    <div className={`text-[9px] font-bold uppercase tracking-wider mt-0.5 ${entry.status === 'SUCCESS' ? 'text-green-500' : 'text-red-500'}`}>
+                      {entry.status}
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className={`font-bold text-sm ${tx.amount < 0 ? 'text-slate-900' : 'text-green-600'}`}>
-                    {tx.amount < 0 ? '-' : '+'}₹{Math.abs(tx.amount).toLocaleString('en-IN')}
-                  </div>
-                  <div className={`text-[9px] font-bold uppercase tracking-wider mt-0.5 ${tx.status === 'SUCCESS' ? 'text-green-500' : 'text-red-500'}`}>
-                    {tx.status}
-                  </div>
-                </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <div className="p-10 text-center">
               <p className="text-slate-400 text-[11px] font-bold uppercase tracking-widest">No recent transactions</p>

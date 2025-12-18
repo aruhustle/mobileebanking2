@@ -27,7 +27,6 @@ export const HDFCLogo: React.FC<{ size?: 'sm' | 'md' | 'lg' | 'xl'; className?: 
     xl: 'w-24 h-24'
   };
   
-  // Use the specific GitHub URL for the icon
   const logoUrl = "https://raw.githubusercontent.com/armaanthakkar/HDFC-Mobile-Banking-App/main/icon.png";
 
   return (
@@ -37,7 +36,6 @@ export const HDFCLogo: React.FC<{ size?: 'sm' | 'md' | 'lg' | 'xl'; className?: 
         alt="HDFC Bank" 
         className="w-full h-full object-contain"
         onError={(e) => {
-          // Fallback reconstruction if GitHub fetch fails
           const target = e.target as HTMLElement;
           target.style.display = 'none';
           const parent = target.parentElement;
@@ -105,6 +103,8 @@ const AppContent: React.FC = () => {
   };
 
   const isPublicRoute = ['/', '/onboard'].includes(location.pathname);
+  // Hide bottom nav on receipt page to avoid overlap with fixed receipt actions
+  const isReceiptPage = location.pathname.startsWith('/receipt/');
 
   useEffect(() => {
     if (user && isPublicRoute) {
@@ -173,7 +173,7 @@ const AppContent: React.FC = () => {
           </Routes>
         </main>
 
-        {user && !isPublicRoute && (
+        {user && !isPublicRoute && !isReceiptPage && (
           <nav className="bg-white border-t border-slate-200 flex justify-around items-center pt-3 pb-8 px-4 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] z-20 flex-shrink-0">
             <NavItem icon="home" label="Home" active={location.pathname === '/dashboard'} onClick={() => navigate('/dashboard')} />
             <NavItem icon="pay" label="Pay" active={location.pathname === '/transfer'} onClick={() => navigate('/transfer')} />
