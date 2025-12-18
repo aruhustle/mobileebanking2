@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { LedgerEntry, LedgerDirection, TransactionStatus } from '../types';
 import { HDFCLogo } from '../App';
@@ -8,6 +8,7 @@ const Receipt: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const [copied, setCopied] = useState(false);
 
   const entry = useMemo(() => {
     if (location.state?.entry) return location.state.entry as LedgerEntry;
@@ -32,130 +33,152 @@ const Receipt: React.FC = () => {
 
   const isDebit = entry.direction === LedgerDirection.DEBIT;
 
-  const handleDownload = () => {
-    window.print();
+  // Mask sensitive IDs
+  const maskId = (val?: string) => {
+    if (!val) return 'N/A';
+    if (val.includes('@')) {
+      const [u, d] = val.split('@');
+      return `${u.slice(0, 2)}***@${d}`;
+    }
+    return `XXXXXX${val.slice(-4)}`;
+  };
+
+  // Derive PSP Name from UPI ID
+  const getPspName = (val?: string) => {
+    if (!val || !val.includes('@')) return 'HDFC Bank';
+    const domain = val.split('@')[1].toLowerCase();
+    if (domain.includes('okaxis')) return 'Axis Bank';
+    if (domain.includes('okicici')) return 'ICICI Bank';
+    if (domain.includes('oksbi')) return 'SBI';
+    if (domain.includes('paytm')) return 'Paytm';
+    if (domain.includes('ybl') || domain.includes('ibl')) return 'PhonePe';
+    return 'Other Bank';
+  };
+
+  const handleCopyId = () => {
+    navigator.clipboard.writeText(entry.upiRefId || entry.transactionId);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const handleShare = () => {
+    const shareText = `Transaction Successful! Paid ₹${Math.abs(entry.amount).toLocaleString()} to ${entry.counterpartyDetails.name}. Ref: ${entry.upiRefId || entry.transactionId}`;
     if (navigator.share) {
-      navigator.share({
-        title: 'HDFC Bank Transaction Receipt',
-        text: `Transaction of ₹${Math.abs(entry.amount).toLocaleString()} to ${entry.counterpartyDetails.name} successful. Ref: ${entry.upiRefId}`,
-        url: window.location.href
-      }).catch(console.error);
+      navigator.share({ title: 'HDFC Transaction Receipt', text: shareText, url: window.location.href }).catch(() => {});
     } else {
-      alert('Transaction details copied to clipboard');
+      navigator.clipboard.writeText(shareText);
+      alert('Copied to clipboard');
     }
   };
 
   return (
-    <div className="min-h-full bg-[#F4F6F8] p-4 safe-top animate-in fade-in duration-500 pb-20">
-      <div className="max-w-md mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 relative print:shadow-none print:border-none">
+    <div className="min-h-full bg-white animate-in fade-in duration-500 overflow-y-auto pb-24 no-scrollbar">
+      {/* Receipt Card Container */}
+      <div className="max-w-md mx-auto print:p-0">
         
-        {/* Subtle Watermark Logo */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none select-none overflow-hidden">
-          <div className="scale-[5] rotate-[-20deg]">
-             <HDFCLogo size="xl" />
+        {/* Header Section */}
+        <div className="flex flex-col items-center pt-10 pb-6 px-6">
+          <HDFCLogo size="lg" className="mb-6" />
+          <div className="flex items-center gap-2 mb-2">
+            <div className={`w-2 h-2 rounded-full ${entry.status === 'SUCCESS' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+            <h1 className="text-xl font-black text-slate-800 tracking-tight">Transaction {entry.status === 'SUCCESS' ? 'Successful' : 'Failed'}</h1>
           </div>
-        </div>
-
-        {/* Receipt Header */}
-        <div className="bg-[#004c8f] p-8 text-center text-white relative z-10 overflow-hidden">
-          {/* Decorative Pattern Overlay */}
-          <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='1' fill-rule='evenodd'%3E%3Cpath d='M0 20L20 0H10L0 10M20 20V10L10 20'/%3E%3C/g%3E%3C/svg%3E")` }}></div>
-          
-          <div className="flex justify-between items-center mb-6">
-            <HDFCLogo size="sm" color="white" />
-            <div className="text-[10px] font-extrabold tracking-[0.3em] uppercase opacity-70">e-Transaction Receipt</div>
+          <div className={`text-4xl font-black tracking-tight mt-4 ${isDebit ? 'text-[#ed1c24]' : 'text-green-600'}`}>
+            {isDebit ? '–' : '+'}₹{Math.abs(entry.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
           </div>
-          
-          <div className="flex justify-center mb-4">
-            <div className={`w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-2xl ring-4 ring-white/10`}>
-              {isDebit ? (
-                <svg className="w-10 h-10 text-[#ed1c24]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                </svg>
-              ) : (
-                <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                </svg>
-              )}
-            </div>
-          </div>
-
-          <h2 className="text-xl font-black uppercase tracking-widest opacity-95">Payment {entry.status}</h2>
-          
-          <div className="text-5xl font-black tracking-tighter mt-4 flex items-center justify-center gap-1">
-            <span className="text-2xl font-light opacity-60">₹</span>
-            {isDebit ? '–' : '+'}{Math.abs(entry.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-          </div>
-          
-          <p className="mt-4 text-white/50 text-[10px] font-bold tracking-[0.2em] uppercase">
-            {entry.direction} • {entry.paymentMethod}
+          <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-2">
+            {entry.paymentMethod} • {new Date(entry.timestamp).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
           </p>
         </div>
 
-        {/* Receipt Details Body */}
-        <div className="p-8 space-y-8 relative z-10 bg-white">
-          <div className="space-y-6">
-            <ReceiptField label="Beneficiary Name" value={entry.counterpartyDetails.name} large />
-            <div className="grid grid-cols-2 gap-x-6 gap-y-6 border-t border-slate-50 pt-6">
-              <ReceiptField label="Recipient ID" value={entry.counterpartyDetails.id || 'N/A'} />
-              <ReceiptField label="Transaction ID" value={entry.transactionId} />
-              <ReceiptField label="UPI Ref ID" value={entry.upiRefId || 'N/A'} />
-              <ReceiptField label="UTR Number" value={entry.utrNumber || 'N/A'} />
-              <ReceiptField label="Payment Date" value={new Date(entry.timestamp).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })} />
-              <ReceiptField label="Time" value={new Date(entry.timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })} />
+        {/* Recipient Details Section */}
+        <div className="mx-6 p-5 bg-slate-50 rounded-2xl border border-slate-100 mb-8">
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Recipient Details</div>
+              <div className="text-base font-bold text-slate-800">{entry.counterpartyDetails.name}</div>
+              <div className="text-xs font-medium text-slate-500 mt-0.5">{maskId(entry.counterpartyDetails.id)}</div>
             </div>
-          </div>
-
-          <div className="pt-4 text-center">
-            <div className="flex items-center justify-center gap-4 mb-6">
-               <div className="h-px bg-slate-100 flex-1" />
-               <HDFCLogo size="sm" className="opacity-40" color="#cbd5e1" />
-               <div className="h-px bg-slate-100 flex-1" />
+            <div className="text-right">
+               <div className="text-[9px] font-bold text-white bg-[#004c8f] px-2 py-0.5 rounded-full uppercase tracking-tighter">
+                 {getPspName(entry.counterpartyDetails.id)}
+               </div>
             </div>
-            <p className="text-[10px] text-slate-400 leading-relaxed font-bold uppercase tracking-widest px-4">
-              Authorized by HDFC Bank MobileBanking. This receipt is digitally generated for your records.
-            </p>
           </div>
         </div>
 
-        {/* Action Controls */}
-        <div className="p-6 bg-slate-50 border-t border-slate-100 flex gap-4 relative z-10 print:hidden">
-          <button 
-            onClick={handleDownload}
-            className="flex-1 py-4 bg-white border border-slate-200 rounded-2xl text-[#004c8f] font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-            Download
-          </button>
-          <button 
-            onClick={handleShare}
-            className="flex-1 py-4 bg-[#004c8f] rounded-2xl text-white font-bold text-[11px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all shadow-xl"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
-            Share
-          </button>
+        {/* Detailed Info Grid */}
+        <div className="px-8 space-y-6">
+          <div className="grid grid-cols-2 gap-y-6 gap-x-4">
+            <ReceiptItem label="UTR Number" value={entry.utrNumber || 'N/A'} />
+            <ReceiptItem label="Reference ID" value={entry.upiRefId || entry.transactionId} />
+            <ReceiptItem label="Payment Date" value={new Date(entry.timestamp).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })} />
+            <ReceiptItem label="Time" value={new Date(entry.timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase()} />
+            <ReceiptItem label="From Account" value={maskId('5010042728350')} />
+            <ReceiptItem label="Paid Via" value={entry.paymentMethod} />
+          </div>
+
+          <div className="h-px bg-slate-100 my-4" />
+
+          {/* Balance Breakdown Section */}
+          <div>
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Balance Summary</div>
+            <div className="space-y-3 bg-slate-50/50 p-4 rounded-xl border border-dashed border-slate-200">
+              <div className="flex justify-between text-xs font-medium text-slate-600">
+                <span>Opening Balance</span>
+                <span>₹{entry.balanceBefore.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div className={`flex justify-between text-xs font-bold ${isDebit ? 'text-[#ed1c24]' : 'text-green-600'}`}>
+                <span>Transaction Amount</span>
+                <span>{isDebit ? '–' : '+'}₹{Math.abs(entry.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div className="h-px bg-slate-200" />
+              <div className="flex justify-between text-sm font-black text-slate-800">
+                <span>Closing Balance</span>
+                <span>₹{entry.balanceAfter.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="p-12 text-center">
+           <p className="text-[9px] text-slate-300 leading-relaxed font-bold uppercase tracking-[0.1em]">
+            This is a computer generated digital receipt and does not require a physical signature.
+            Payments are processed securely via HDFC Bank's multi-layered gateway.
+          </p>
         </div>
       </div>
-      
-      <div className="flex flex-col items-center mt-8 gap-4 print:hidden">
+
+      {/* Floating Action Bar */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-slate-100 flex gap-3 print:hidden shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
         <button 
-          onClick={() => navigate('/history')}
-          className="px-10 py-4 bg-white text-[#004c8f] border border-slate-200 rounded-full font-black text-[11px] uppercase tracking-[0.2em] active:scale-95 transition-all shadow-sm"
+          onClick={handleCopyId}
+          className="flex-1 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-600 font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all"
         >
-          View Statement
+          {copied ? 'Copied!' : 'Copy ID'}
+        </button>
+        <button 
+          onClick={() => window.print()}
+          className="flex-1 py-3.5 bg-white border border-[#004c8f] rounded-xl text-[#004c8f] font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm"
+        >
+          Download
+        </button>
+        <button 
+          onClick={handleShare}
+          className="flex-1 py-3.5 bg-[#004c8f] rounded-xl text-white font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-all shadow-lg"
+        >
+          Share
         </button>
       </div>
     </div>
   );
 };
 
-const ReceiptField = ({ label, value, large }: { label: string; value: string; large?: boolean }) => (
-  <div className="flex flex-col text-left">
-    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">{label}</div>
-    <div className={`${large ? 'text-xl' : 'text-sm'} font-bold text-slate-800 break-words leading-tight tracking-tight`}>{value}</div>
+const ReceiptItem = ({ label, value }: { label: string; value: string }) => (
+  <div className="overflow-hidden">
+    <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 truncate">{label}</div>
+    <div className="text-[13px] font-bold text-slate-700 truncate leading-tight">{value}</div>
   </div>
 );
 

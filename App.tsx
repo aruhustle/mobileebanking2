@@ -27,15 +27,49 @@ export const HDFCLogo: React.FC<{ size?: 'sm' | 'md' | 'lg' | 'xl'; className?: 
     xl: 'w-24 h-24'
   };
   
+  // Use the specific GitHub URL for the icon
+  const logoUrl = "https://raw.githubusercontent.com/armaanthakkar/HDFC-Mobile-Banking-App/main/icon.png";
+
   return (
-    <div className={`${dimensions[size]} ${className} flex-shrink-0 flex items-center justify-center`}>
-      {/* High-fidelity HDFC Logo Reconstruction using SVG */}
-      <svg viewBox="0 0 100 100" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-        <rect width="100" height="100" rx="4" fill={color}/>
-        <rect x="18" y="24" width="14" height="52" fill="white"/>
-        <rect x="68" y="24" width="14" height="52" fill="white"/>
-        <rect x="32" y="42" width="36" height="16" fill="white"/>
-      </svg>
+    <div className={`${dimensions[size]} ${className} flex-shrink-0 flex items-center justify-center overflow-hidden rounded-sm bg-white p-0.5`}>
+      <img 
+        src={logoUrl} 
+        alt="HDFC Bank" 
+        className="w-full h-full object-contain"
+        onError={(e) => {
+          // Fallback reconstruction if GitHub fetch fails
+          const target = e.target as HTMLElement;
+          target.style.display = 'none';
+          const parent = target.parentElement;
+          if (parent) {
+            const svgNamespace = "http://www.w3.org/2000/svg";
+            const svg = document.createElementNS(svgNamespace, "svg");
+            svg.setAttribute("viewBox", "0 0 100 100");
+            svg.setAttribute("class", "w-full h-full");
+            
+            const rect = document.createElementNS(svgNamespace, "rect");
+            rect.setAttribute("width", "100");
+            rect.setAttribute("height", "100");
+            rect.setAttribute("rx", "4");
+            rect.setAttribute("fill", color);
+            
+            const p1 = document.createElementNS(svgNamespace, "rect");
+            p1.setAttribute("x", "18"); p1.setAttribute("y", "24"); p1.setAttribute("width", "14"); p1.setAttribute("height", "52"); p1.setAttribute("fill", "white");
+            
+            const p2 = document.createElementNS(svgNamespace, "rect");
+            p2.setAttribute("x", "68"); p2.setAttribute("y", "24"); p2.setAttribute("width", "14"); p2.setAttribute("height", "52"); p2.setAttribute("fill", "white");
+            
+            const p3 = document.createElementNS(svgNamespace, "rect");
+            p3.setAttribute("x", "32"); p3.setAttribute("y", "42"); p3.setAttribute("width", "36"); p3.setAttribute("height", "16"); p3.setAttribute("fill", "white");
+            
+            svg.appendChild(rect);
+            svg.appendChild(p1);
+            svg.appendChild(p2);
+            svg.appendChild(p3);
+            parent.appendChild(svg);
+          }
+        }}
+      />
     </div>
   );
 }
@@ -105,7 +139,7 @@ const AppContent: React.FC = () => {
               </svg>
             </button>
             <div className="flex items-center gap-2">
-              <HDFCLogo size="sm" color="white" />
+              <HDFCLogo size="sm" />
               <div className="text-xl font-bold tracking-tight">HDFC Bank</div>
             </div>
             <button 

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { VirtualAccount, TransactionType, TransactionStatus, Transaction, User } from '../types';
@@ -17,7 +18,9 @@ const ScanAndPay: React.FC<ScanAndPayProps> = ({ account: propAccount }) => {
   const [processing, setProcessing] = useState(false);
   const [showPinScreen, setShowPinScreen] = useState(false);
   const [pin, setPin] = useState('');
+  const [isProcessingFile, setIsProcessingFile] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
   const activeUser: User | null = React.useMemo(() => {
@@ -45,13 +48,12 @@ const ScanAndPay: React.FC<ScanAndPayProps> = ({ account: propAccount }) => {
         console.error('Camera access denied:', err);
       }
     };
-    if (scanning) startCamera();
+    if (scanning && !isProcessingFile) startCamera();
     return () => {
       if (stream) stream.getTracks().forEach(track => track.stop());
     };
-  }, [scanning]);
+  }, [scanning, isProcessingFile]);
 
-  // Handle detection via manual tap for testing on desktop environments
   const handleManualScan = () => {
     const mockUrl = 'upi://pay?pa=merchant@hdfcbank&pn=HDFC%20Cafe&am=150.00&tn=Coffee';
     const result = parseUPIUrl(mockUrl);
@@ -62,6 +64,30 @@ const ScanAndPay: React.FC<ScanAndPayProps> = ({ account: propAccount }) => {
       setAmount('');
     }
     setScanning(false);
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsProcessingFile(true);
+    setScanning(false);
+
+    // Simulate QR code extraction from the image
+    // In a real app, you'd use a library like jsQR or ZXing here.
+    setTimeout(() => {
+      // For simulation, we'll "extract" a predefined UPI URL from the selected image
+      const mockUrlFromImage = 'upi://pay?pa=gallery_merchant@hdfc&pn=Gallery%20Payee&am=500.00&tn=Gallery%20Payment';
+      const result = parseUPIUrl(mockUrlFromImage);
+      
+      setParsed(result);
+      if (result.amount) {
+        setAmount(result.amount);
+      } else {
+        setAmount('');
+      }
+      setIsProcessingFile(false);
+    }, 1500);
   };
 
   const isAmountValid = React.useMemo(() => {
@@ -106,7 +132,6 @@ const ScanAndPay: React.FC<ScanAndPayProps> = ({ account: propAccount }) => {
       await new Promise(resolve => setTimeout(resolve, 2000));
       db.addTransaction(tx);
       const ledgerEntry = await executeTransaction(tx);
-      // Ensure redirect to receipt screen
       navigate(`/receipt/${ledgerEntry.transactionId}`, { state: { entry: ledgerEntry }, replace: true });
     } catch (err: any) {
       alert(err.message || 'Payment Failed');
@@ -115,6 +140,16 @@ const ScanAndPay: React.FC<ScanAndPayProps> = ({ account: propAccount }) => {
       setPin('');
     }
   };
+
+  if (isProcessingFile) {
+    return (
+      <div className="h-full w-full bg-[#004c8f] flex flex-col items-center justify-center text-white px-8 animate-in fade-in duration-300">
+        <div className="w-16 h-16 border-4 border-white/30 border-t-white rounded-full animate-spin mb-6"></div>
+        <h2 className="text-xl font-bold uppercase tracking-widest text-center">Reading QR from Image</h2>
+        <p className="mt-2 text-white/60 text-xs font-bold uppercase tracking-tighter text-center">Processing details securely...</p>
+      </div>
+    );
+  }
 
   if (showPinScreen && parsed) {
     return (
@@ -166,7 +201,7 @@ const ScanAndPay: React.FC<ScanAndPayProps> = ({ account: propAccount }) => {
     );
   }
 
-  if (!scanning && parsed) {
+  if (!scanning && parsed && !isProcessingFile) {
     const isFixed = !!parsed.amount;
     return (
       <div className="p-6 space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 min-h-full bg-[#F4F6F8]">
@@ -238,14 +273,32 @@ const ScanAndPay: React.FC<ScanAndPayProps> = ({ account: propAccount }) => {
         <p className="mt-10 text-white font-bold text-xs uppercase tracking-[0.2em] opacity-80">Scan any UPI QR Code</p>
       </div>
 
+      <input 
+        type="file" 
+        accept="image/*" 
+        ref={fileInputRef} 
+        onChange={handleFileUpload} 
+        className="hidden" 
+      />
+
       <div className="absolute bottom-12 left-0 right-0 px-8 flex flex-col gap-4">
-        {/* Simplified manual trigger for testing environments */}
+        <button 
+          onClick={() => fileInputRef.current?.click()}
+          className="w-full py-4 bg-white text-[#004c8f] rounded-2xl font-bold text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          Upload from Gallery
+        </button>
+
         <div 
           onClick={handleManualScan}
-          className="w-full py-10 text-center text-white/10 active:text-white/20 font-bold text-[10px] uppercase tracking-widest cursor-pointer pointer-events-auto"
+          className="w-full py-6 text-center text-white/10 active:text-white/20 font-bold text-[10px] uppercase tracking-widest cursor-pointer pointer-events-auto"
         >
-          Tap here to test detection
+          Tap to auto-detect QR (Test)
         </div>
+        
         <button 
           onClick={() => navigate('/dashboard')}
           className="w-full py-3 bg-white/10 backdrop-blur-lg text-white rounded-xl font-bold text-[10px] uppercase tracking-widest active:bg-white/20 transition-all"

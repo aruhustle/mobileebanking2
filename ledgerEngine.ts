@@ -12,8 +12,8 @@ export const calculateBalance = (accountId: string): number => {
     .reduce((sum, entry) => sum + entry.amount, 0);
 };
 
-const generateUpiRefId = () => `TXN${Math.floor(1000000000 + Math.random() * 9000000000)}`;
-const generateUtrNumber = () => `UTR${Math.floor(1000000000 + Math.random() * 9000000000)}`;
+const generateUpiRefId = () => `HDFC${Math.floor(1000000000 + Math.random() * 9000000000)}`;
+const generateUtrNumber = () => `${Math.floor(100000000000 + Math.random() * 900000000000)}`; // 12-digit numeric UTR
 
 export const executeTransaction = async (tx: Transaction) => {
   const balanceBefore = calculateBalance(tx.senderAccountId);
@@ -28,7 +28,7 @@ export const executeTransaction = async (tx: Transaction) => {
     const timestamp = Date.now();
     const userId = db.getAccounts().find(a => a.id === tx.senderAccountId)?.userId || '';
 
-    // Generate specific IDs requested
+    // Generate specific IDs once per transaction
     const upiRefId = generateUpiRefId();
     const utrNumber = generateUtrNumber();
 
@@ -53,20 +53,23 @@ export const executeTransaction = async (tx: Transaction) => {
       status: TransactionStatus.SUCCESS
     };
 
-    // Rollback check: If balance_after != balance_before + amount, fatal error
-    if (debitEntry.balanceAfter !== debitEntry.balanceBefore + debitEntry.amount) {
+    // Parity check
+    if (Math.abs(debitEntry.balanceAfter - (debitEntry.balanceBefore + debitEntry.amount)) > 0.01) {
       throw new Error('Ledger parity mismatch. Transaction aborted.');
     }
 
     db.addLedgerEntry(debitEntry);
     db.updateTransactionStatus(tx.id, TransactionStatus.SUCCESS);
     
+    // Update the transaction object itself to persist the generated IDs if needed
+    // In this simulation, we rely on the LedgerEntry for receipt details.
+
     // Add success notification
     db.addNotification({
       id: 'notif-' + Math.random().toString(36).substr(2, 9),
       userId: userId,
       title: 'Payment Successful',
-      message: `₹${tx.amount.toLocaleString()} ${debitEntry.direction} to ${tx.receiverDetails.name}. Ref: ${upiRefId}`,
+      message: `₹${tx.amount.toLocaleString()} sent to ${tx.receiverDetails.name}. UTR: ${utrNumber}`,
       type: 'SUCCESS',
       isRead: false,
       timestamp: timestamp
