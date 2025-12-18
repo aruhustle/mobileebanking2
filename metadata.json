@@ -1,0 +1,7 @@
+{
+  "name": "MobileBanking",
+  "description": "The official HDFC Bank mobile banking experience. Securely manage accounts, transfer funds via UPI/IMPS, pay bills, and invest on the go.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
